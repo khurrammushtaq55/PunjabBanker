@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1086474396028",
+    "project_id": "my-bank-project-c3e39",
+    "storage_bucket": "my-bank-project-c3e39.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1086474396028:android:d4e08ad77e73f647e544f9",
+        "android_client_info": {
+          "package_name": "com.mmushtaq.bank"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1086474396028-f1alra0h2sp8ggikt8miqaa9pp4lfh9f.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAXLMHGvJmsdAAppSrFBLSZMbP0sOfhzIc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1086474396028-f1alra0h2sp8ggikt8miqaa9pp4lfh9f.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
