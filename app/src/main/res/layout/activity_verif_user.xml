@@ -1,0 +1,49 @@
+<LinearLayout android:id="@+id/main_layout"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:orientation="vertical"
+    android:layout_height="match_parent">
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tab_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary"
+        android:elevation="6dp"
+        android:minHeight="?attr/actionBarSize"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"/>
+    <LinearLayout
+        android:layout_below="@+id/tab_layout"
+        android:layout_above="@+id/pager"
+        android:layout_width="match_parent"
+        android:weightSum="2"
+        android:orientation="horizontal"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/txtUserName"
+            android:textColor="#000000"
+            android:text="Name"
+            android:textStyle="bold"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:layout_centerHorizontal="true"
+            android:layout_height="wrap_content"/>
+
+        <TextView
+            android:id="@+id/txtUserCnic"
+            android:textColor="#000000"
+            android:gravity="center"
+            android:text="Name"
+            android:textStyle="bold"
+            android:layout_below="@+id/txtUserName"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_centerHorizontal="true"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+
+    <include layout="@layout/pager_layout"/>
+
+
+</LinearLayout>
