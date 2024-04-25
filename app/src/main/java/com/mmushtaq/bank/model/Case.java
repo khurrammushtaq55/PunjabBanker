@@ -259,4 +259,15 @@ public class Case implements Serializable {
     public void setSections(List<Section> sections) {
         this.sections = sections;
     }
+
+    public Case copy() {
+        Case obj=new Case();
+        obj.setName(getName());
+        obj.setPresent_address(getPresent_address());
+        obj.setBusiness_address(getBusiness_address());
+        obj.setPresent_tehsil(getPresent_tehsil());
+        obj.setPresent_district(getPresent_district());
+        obj.setPrimary_mobile(getPrimary_mobile());
+        return obj;
+    }
 }

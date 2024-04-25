@@ -6,6 +6,8 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import android.os.PersistableBundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -29,10 +31,11 @@ import com.mmushtaq.bank.utils.CacheManager
 import com.mmushtaq.bank.utils.TinyDB
 import com.mmushtaq.bank.viewmodel.SectionsViewModel
 import com.mmushtaq.bank.viewmodel.SharedViewModel
-import kotlinx.android.synthetic.main.activity_bank_users.*
+import kotlinx.android.synthetic.main.activity_cases_list.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.util.Locale
 
 class CasesActivity : AppCompatActivity(), SectionsViewModel.ServerResponse {
     private lateinit var viewModel: SectionsViewModel
@@ -43,7 +46,7 @@ class CasesActivity : AppCompatActivity(), SectionsViewModel.ServerResponse {
         savedInstanceState?.clear();
         super.onCreate(savedInstanceState)
 //        CacheManager.instance?.caseModel
-        setContentView(R.layout.activity_bank_users)
+        setContentView(R.layout.activity_cases_list)
         TooLargeTool.startLogging(applicationContext as Application)
         viewModel = ViewModelProvider(this).get(SectionsViewModel::class.java)
         sharedViewModel = ViewModelProvider(this).get(SharedViewModel::class.java)
@@ -59,11 +62,11 @@ class CasesActivity : AppCompatActivity(), SectionsViewModel.ServerResponse {
         } else if (BaseMethods.haveNetworkConnection(this)) {
             val tinyDB = TinyDB(this)
             if (null != tinyDB.getObject(AppConstants.KEY_CASES) && !tinyDB.getObject(AppConstants.KEY_CASES).isNullOrEmpty()) {
-                sync.visibility = View.VISIBLE
+                syncButton.visibility = View.VISIBLE
             } else {
-                sync.visibility = View.GONE
+                syncButton.visibility = View.GONE
             }
-            sync.setOnClickListener {
+            syncButton.setOnClickListener {
                 BaseMethods.progressdialog(this)
                 viewModel.saveCase(tinyDB.getObject(AppConstants.KEY_CASES)!!)
             }
@@ -91,8 +94,24 @@ class CasesActivity : AppCompatActivity(), SectionsViewModel.ServerResponse {
             emptyListView.visibility = View.GONE
             val bankRecyclerView = findViewById<RecyclerView>(R.id.bankUsersRecyclerView)
             bankRecyclerView.layoutManager = LinearLayoutManager(this)
-            val bankUsersAdapter = CasesAdapter(this, caseModel.cases as ArrayList<Case>, sharedViewModel)
-            bankRecyclerView.adapter = bankUsersAdapter
+            val casesAdapter = CasesAdapter(this, caseModel.cases as ArrayList<Case>, sharedViewModel)
+            bankRecyclerView.adapter = casesAdapter
+
+            etSearchCases.addTextChangedListener(object :TextWatcher{
+                override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+
+                }
+
+                override fun onTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
+                    val text = etSearchCases.text.toString().toLowerCase(Locale.ROOT)
+                    casesAdapter.filter(text);
+                }
+
+                override fun afterTextChanged(p0: Editable?) {
+                }
+
+            })
+
         } else emptyListView.visibility = View.VISIBLE
 
     }
@@ -101,7 +120,7 @@ class CasesActivity : AppCompatActivity(), SectionsViewModel.ServerResponse {
         BaseMethods.finishprogress()
         val tinyDB = TinyDB(this)
         tinyDB.clear()
-        sync.visibility = View.GONE
+        syncButton.visibility = View.GONE
         Toast.makeText(this, message.message(), Toast.LENGTH_SHORT).show()
         viewModel.getCases()
 
@@ -109,7 +128,7 @@ class CasesActivity : AppCompatActivity(), SectionsViewModel.ServerResponse {
 
     override fun onFailure(message: String?) {
         BaseMethods.finishprogress()
-        sync.visibility = View.GONE
+        syncButton.visibility = View.GONE
         Toast.makeText(this, "Error Occur", Toast.LENGTH_SHORT).show()
 
     }

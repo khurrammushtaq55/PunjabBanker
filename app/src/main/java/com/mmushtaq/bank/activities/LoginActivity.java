@@ -48,8 +48,6 @@ public class LoginActivity extends AppCompatActivity {
             edtUsername = findViewById(R.id.input_email);
             edtPassword = findViewById(R.id.input_password);
             btnLogin = findViewById(R.id.btn_login);
-//            edtUsername.setText("kamran.mustafa1991@gmail.com");
-//            edtPassword.setText("123456");
             btnLogin.setOnClickListener(v -> {
                 String username = edtUsername.getText().toString();
                 String password = edtPassword.getText().toString();

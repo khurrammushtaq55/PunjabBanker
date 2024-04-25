@@ -15,42 +15,65 @@ import com.mmushtaq.bank.fragments.CaseDetailsFragment
 import com.mmushtaq.bank.model.Case
 import com.mmushtaq.bank.utils.CacheManager
 import com.mmushtaq.bank.viewmodel.SharedViewModel
+import java.util.Locale
+
 
 class CasesAdapter(context: Context, cases: ArrayList<Case>, sharedViewModel: SharedViewModel) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private val cases: List<Case>?
     private val mLayoutInflater: LayoutInflater = LayoutInflater.from(context)
     private val context: Context
     private val sharedViewModel: SharedViewModel
+    private var tempCases:ArrayList<Case>?
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        val view = mLayoutInflater.inflate(R.layout.item_banks_users, parent, false)
+        val view = mLayoutInflater.inflate(R.layout.item_cases, parent, false)
         return MyViewHolder(view)
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val viewHolder = holder as MyViewHolder
-        val cas = cases!![position]
-        viewHolder.txtUserCnic.text = """${cas.getPresent_tehsil()} - ${cas.getPresent_district()}"""
-        viewHolder.txtUserName.text = cas.getName()
-        viewHolder.txtUserNo.text = cas.getPrimary_mobile()
+        val cas = tempCases!![position]
+        viewHolder.txtUserCnic.text = """${cas.present_tehsil} - ${cas.present_district}"""
+        viewHolder.txtUserName.text = cas.name
+        viewHolder.txtUserNo.text = cas.primary_mobile
         viewHolder.btnDetails.setOnClickListener {
             val fm: FragmentManager = (context as FragmentActivity).supportFragmentManager
             val ft: FragmentTransaction = fm.beginTransaction()
-//            sharedViewModel.setCase(cas)
-//            sharedViewModel.setCaseArray(cases as ArrayList<Case>)
-            //cas, cases as ArrayList<Case>
-//            val args = Bundle()
-//            args.putSerializable("key_model", sharedViewModel)
-//            args.putSerializable("key_case", cas)
-//            args.putSerializable("key_list", cases as ArrayList<Case>)
-            CacheManager.instance?.case = cas
+
+            CacheManager.instance?.case = cases!![position]
             CacheManager.instance?.caseList = cases as ArrayList<Case>
             ft.add(android.R.id.content, CaseDetailsFragment()).addToBackStack(null).commit()
 
         }
     }
 
+    // filter name in Search Bar
+    fun filter(searchText: String) {
+        if (searchText.isEmpty()) {
+            if (cases != null) {
+                 tempCases = cases.map { it.copy() } as  ArrayList<Case>?
+            }
+        } else {
+
+            tempCases?.clear()
+            if (cases != null) {
+                for (case in cases) {
+                    if (case.name.toLowerCase(Locale.ROOT).contains(searchText)
+                        || case.present_tehsil.toLowerCase(Locale.ROOT).contains(searchText)
+                        || case.present_district.toLowerCase(Locale.ROOT).contains(searchText)
+                        || case.primary_mobile.toLowerCase(Locale.ROOT).contains(searchText)
+                        ) {
+                        tempCases?.add(case)
+                    }
+                }
+            }
+        }
+        notifyDataSetChanged()
+    }
+
+
     override fun getItemCount(): Int {
-        return cases?.size ?: 0
+        return tempCases?.size ?: 0
     }
 
     override fun getItemId(position: Int): Long {
@@ -75,5 +98,6 @@ class CasesAdapter(context: Context, cases: ArrayList<Case>, sharedViewModel: Sh
         this.cases = cases
         this.context = context
         this.sharedViewModel = sharedViewModel
+        this.tempCases = cases.map { it.copy() } as  ArrayList<Case>?
     }
 }
