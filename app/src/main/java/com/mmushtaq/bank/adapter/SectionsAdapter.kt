@@ -18,20 +18,19 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.mmushtaq.bank.R
 import com.mmushtaq.bank.model.Question
-import com.mmushtaq.bank.remote.AppConstants
+import com.mmushtaq.bank.utils.AppConstants
 import com.mmushtaq.bank.utils.BaseMethods
 import com.tiper.MaterialSpinner
 import java.util.*
-import kotlin.collections.ArrayList
 
 
-class SectionsAdapter(private val context: Context) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class SectionsAdapter(private val context: Context) :
+    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private lateinit var questions: ArrayList<Question>
     private var fieldIndex = 0
     private val mLayoutInflater: LayoutInflater = LayoutInflater.from(context)
-    lateinit var  validateFieldListner : ValidateFieldListner
-    private lateinit var viewHolder : MyViewHolder
-
+    lateinit var validateFieldListner: ValidateFieldListner
+    private lateinit var viewHolder: MyViewHolder
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -54,7 +53,6 @@ class SectionsAdapter(private val context: Context) : RecyclerView.Adapter<Recyc
         setData(question, viewHolder)
 
 
-
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -70,7 +68,11 @@ class SectionsAdapter(private val context: Context) : RecyclerView.Adapter<Recyc
 
     }
 
-    private fun setRemarksViewListener(question: Question, viewHolder: MyViewHolder, position: Int) {
+    private fun setRemarksViewListener(
+        question: Question,
+        viewHolder: MyViewHolder,
+        position: Int
+    ) {
         viewHolder.remarks.addTextChangedListener(object : TextWatcher {
             override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
                 if (s.isNotEmpty()) {
@@ -93,15 +95,17 @@ class SectionsAdapter(private val context: Context) : RecyclerView.Adapter<Recyc
 
     }
 
-    private fun setEdittextViewListener(question: Question, viewHolder: MyViewHolder, position: Int) {
+    private fun setEdittextViewListener(
+        question: Question,
+        viewHolder: MyViewHolder,
+        position: Int
+    ) {
 
         viewHolder.edtTextSection.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == EditorInfo.IME_ACTION_DONE ) {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
                 BaseMethods.hideKeyboard(context as Activity)
-            }
-            else{
-                if(!viewHolder.edtTextSection.requestFocus(View.FOCUS_RIGHT))
-                {
+            } else {
+                if (!viewHolder.edtTextSection.requestFocus(View.FOCUS_RIGHT)) {
                     BaseMethods.hideKeyboard(context as Activity)
                 }
             }
@@ -117,7 +121,7 @@ class SectionsAdapter(private val context: Context) : RecyclerView.Adapter<Recyc
             }
 
             override fun afterTextChanged(s: Editable) {
-                question.selectedAnswer =removeDashes( s.toString())
+                question.selectedAnswer = removeDashes(s.toString())
                 validateFieldListner.validateField(caseIndex = fieldIndex)
                 questions[position] = question
             }
@@ -128,48 +132,51 @@ class SectionsAdapter(private val context: Context) : RecyclerView.Adapter<Recyc
 
     private fun removeDashes(text: String): String? {
 
-        if(text.isNotEmpty())
-        {
+        if (text.isNotEmpty()) {
             return text.replace("-", "")
         }
         return text
     }
 
     private fun setDropDownView(question: Question, viewHolder: MyViewHolder, position: Int) {
-        if (!question.answers.isNullOrEmpty() && question.question_type==(AppConstants.QuestionType.TYPE_DROPDOWN)) {
+        if (!question.answers.isNullOrEmpty() && question.question_type == (AppConstants.QuestionType.TYPE_DROPDOWN)) {
 
             viewHolder.edtTextSection.visibility = View.GONE
             viewHolder.selectrSection.visibility = View.VISIBLE
 
-           val newAnswer = ArrayList<String>()
-             question.answers.forEach { it -> newAnswer.add(it.description)
-                 /*if(it.isRemarks_required)
-                 {
-                     viewHolder.remarks.visibility = View.VISIBLE
-                 }else
-                 {*/
-                    viewHolder.remarks.visibility = View.GONE
+            val newAnswer = ArrayList<String>()
+            question.answers.forEach { it ->
+                newAnswer.add(it.description)
+                /*if(it.isRemarks_required)
+                {
+                    viewHolder.remarks.visibility = View.VISIBLE
+                }else
+                {*/
+                viewHolder.remarks.visibility = View.GONE
 //                }
             }
             question.question_type
-            val arrayAdapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, newAnswer)
+            val arrayAdapter =
+                ArrayAdapter(context, android.R.layout.simple_spinner_item, newAnswer)
             arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
             viewHolder.selectrSection.adapter = arrayAdapter
             val listener by lazy {
                 object : MaterialSpinner.OnItemSelectedListener {
-                    override fun onItemSelected(parent: MaterialSpinner, view: View?, pos: Int, id: Long) {
+                    override fun onItemSelected(
+                        parent: MaterialSpinner,
+                        view: View?,
+                        pos: Int,
+                        id: Long
+                    ) {
                         BaseMethods.hideKeyboard(context as Activity)
                         question.selectedAnswer = newAnswer[pos]
                         question.answerId = question.answers[pos].id.toString()
                         question.isFieldFilled = true
                         questions[position] = question
                         validateFieldListner.validateField(caseIndex = fieldIndex)
-                        if(question.answers[pos].isRemarks_required)
-                        {
+                        if (question.answers[pos].isRemarks_required) {
                             viewHolder.remarks.visibility = View.VISIBLE
-                        }
-                        else
-                        {
+                        } else {
                             viewHolder.remarks.visibility = View.GONE
                         }
 
@@ -191,24 +198,23 @@ class SectionsAdapter(private val context: Context) : RecyclerView.Adapter<Recyc
 
     private fun setData(question: Question, viewHolder: MyViewHolder) {
         viewHolder.partnerQue.text = question.description
-        if(!question.given_answer.isNullOrEmpty())
+        if (!question.given_answer.isNullOrEmpty())
             viewHolder.edtTextSection.setText(question.given_answer!!)
-        if(null != question.keyboard_type) {
+        if (null != question.keyboard_type) {
             setKeyBoardType(question.keyboard_type, viewHolder, question)
         }
 
 
-        if(!question.selectedAnswer.isNullOrEmpty() && question.question_type==(AppConstants.QuestionType.TYPE_STRING))
+        if (!question.selectedAnswer.isNullOrEmpty() && question.question_type == (AppConstants.QuestionType.TYPE_STRING))
             viewHolder.edtTextSection.setText(question.selectedAnswer)
-        else  if(question.question_type==(AppConstants.QuestionType.TYPE_STRING))
+        else if (question.question_type == (AppConstants.QuestionType.TYPE_STRING))
             viewHolder.edtTextSection.setText(AppConstants.KEY_EMPTY)
 
 
-        if(!question.answers.isNullOrEmpty())
-            for (i in 0 until question.answers.size)
-            {
-                if(question.answers[i].description==question.selectedAnswer)
-                {   viewHolder.selectrSection.selection=(i)
+        if (!question.answers.isNullOrEmpty())
+            for (i in 0 until question.answers.size) {
+                if (question.answers[i].description == question.selectedAnswer) {
+                    viewHolder.selectrSection.selection = (i)
                     break
                 }
             }
@@ -237,21 +243,21 @@ class SectionsAdapter(private val context: Context) : RecyclerView.Adapter<Recyc
         notifyDataSetChanged()
     }
 
-    fun  getFilledData() : ArrayList<Question>?
-    {
+    fun getFilledData(): ArrayList<Question>? {
         return questions
     }
-    private fun setKeyBoardType(type: String, viewholder: MyViewHolder, question: Question)
-    {
-        if(question.max_length>0)
-        viewholder.edtTextSection.filters = arrayOf(InputFilter.LengthFilter(question.max_length))
 
-        when(type)
-        {
+    private fun setKeyBoardType(type: String, viewholder: MyViewHolder, question: Question) {
+        if (question.max_length > 0)
+            viewholder.edtTextSection.filters =
+                arrayOf(InputFilter.LengthFilter(question.max_length))
+
+        when (type) {
 
             AppConstants.KeyboardType.TYPE_STRING -> {
                 viewholder.edtTextSection.inputType = InputType.TYPE_CLASS_TEXT
             }
+
             AppConstants.KeyboardType.TYPE_MOBILE -> {
                 viewholder.edtTextSection.inputType = InputType.TYPE_CLASS_NUMBER
                 /* viewholder.edtTextSection.addTextChangedListener(PhoneNumberTextWatcher(viewholder.edtTextSection));
@@ -259,6 +265,7 @@ class SectionsAdapter(private val context: Context) : RecyclerView.Adapter<Recyc
                  viewholder.edtTextSection.filters = arrayOf(InputFilter.LengthFilter(question.max_length+2))*/
 
             }
+
             AppConstants.KeyboardType.TYPE_CNIC -> {
                 viewholder.edtTextSection.inputType = InputType.TYPE_CLASS_NUMBER
                 /* viewholder.edtTextSection.addTextChangedListener(CnicTextWatcher(viewholder.edtTextSection));

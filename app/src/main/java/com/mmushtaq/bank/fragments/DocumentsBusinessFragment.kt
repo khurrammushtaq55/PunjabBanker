@@ -18,16 +18,17 @@ import com.github.drjacky.imagepicker.ImagePicker
 import com.mmushtaq.bank.R
 import com.mmushtaq.bank.adapter.DocumentsAdapter
 import com.mmushtaq.bank.model.Documents
-import com.mmushtaq.bank.remote.AppConstants
 import com.mmushtaq.bank.remote.BaseApplication
 import com.mmushtaq.bank.remote.SharedPreferences
+import com.mmushtaq.bank.utils.AppConstants
 import com.mmushtaq.bank.utils.BaseMethods
 import com.mmushtaq.bank.utils.CacheManager.case
 import com.mmushtaq.bank.utils.EasyLocationFetch
 import com.mmushtaq.bank.utils.GeoLocationModel
-import com.mmushtaq.bank.viewmodel.SharedSubmittedDataViewModel
+import com.mmushtaq.bank.viewmodel.SubmissionViewModel
 import id.zelory.compressor.Compressor
-import kotlinx.android.synthetic.main.tab_fragment_documents.*
+import kotlinx.android.synthetic.main.tab_fragment_documents.docNext
+import kotlinx.android.synthetic.main.tab_fragment_documents.docRecycler
 import kotlinx.coroutines.launch
 import org.apache.commons.io.FileUtils
 import java.io.File
@@ -35,7 +36,7 @@ import java.io.IOException
 
 
 class DocumentsBusinessFragment() : BaseFragment() {
-    private lateinit var sharedSubmittedDataViewModel: SharedSubmittedDataViewModel
+    private lateinit var submissionViewModel: SubmissionViewModel
     private var contentView: View? = null
     private var documentsAdapter: DocumentsAdapter? = null
     private var btn: Button? = null
@@ -49,14 +50,18 @@ class DocumentsBusinessFragment() : BaseFragment() {
     private var ar: ByteArray? = null
 
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         contentView = inflater.inflate(R.layout.tab_fragment_documents, container, false)
         return contentView
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        sharedSubmittedDataViewModel = ViewModelProvider(this).get(SharedSubmittedDataViewModel::class.java)
+        submissionViewModel = ViewModelProvider(this).get(SubmissionViewModel::class.java)
 
         enableButton(validateFields(case.documents_business_attributes))
         setRecyclerView()
@@ -79,10 +84,11 @@ class DocumentsBusinessFragment() : BaseFragment() {
     private fun setListener() {
         docNext.setOnClickListener {
             case.documents_business_attributes = documentsAdapter!!.getFilledData()
-            sharedSubmittedDataViewModel.setSectionCase(case)
+            submissionViewModel.setSectionCase(case)
 
             val ft = activity?.supportFragmentManager?.beginTransaction()
-            ft?.add(android.R.id.content, SubmissionFragment())?.addToBackStack("SubmissionFragment")?.commit()
+            ft?.add(android.R.id.content, SubmissionFragment())
+                ?.addToBackStack("SubmissionFragment")?.commit()
         }
 
     }
@@ -90,13 +96,24 @@ class DocumentsBusinessFragment() : BaseFragment() {
     private fun setRecyclerView() {
         docRecycler.layoutManager
         docRecycler.layoutManager = LinearLayoutManager(activity)
-        val documentAdapter = DocumentsAdapter(requireActivity(), case.documents_business_attributes, ::itemClick, ::onUpload, ::removeAttachment)
+        val documentAdapter = DocumentsAdapter(
+            requireActivity(),
+            case.documents_business_attributes,
+            ::itemClick,
+            ::onUpload,
+            ::removeAttachment
+        )
         documentsAdapter = documentAdapter
         this.docRecycler.adapter = documentsAdapter
 
     }
 
-    private fun onUpload(position: Int, view: Button, removeButton: ImageView, container: ConstraintLayout) {
+    private fun onUpload(
+        position: Int,
+        view: Button,
+        removeButton: ImageView,
+        container: ConstraintLayout
+    ) {
 
 
         if (view.text != getString(R.string.img_uploaded)) {
@@ -104,7 +121,10 @@ class DocumentsBusinessFragment() : BaseFragment() {
             removeBtn = removeButton
             containerLatLng = container
             currentPosition = position
-            if (AppConstants.YES == SharedPreferences.getSharedPreferences(AppConstants.KEY_CAN_UPLOAD_PICTURE, BaseApplication.getContext())) {
+            if (AppConstants.YES == SharedPreferences.getSharedPreferences(
+                    AppConstants.KEY_CAN_UPLOAD_PICTURE, activity
+                )
+            ) {
                 createPickerDialog(position)
             } else {
                 ImagePicker.with(this).cameraOnly().start()
@@ -138,7 +158,7 @@ class DocumentsBusinessFragment() : BaseFragment() {
             return
         }
 
-        BaseMethods.progressdialog(requireActivity())
+        BaseMethods.showProgressDialog(requireActivity())
         val image = ImagePicker.getFile(data)
         try {
             actualImage = ImagePicker.getFile(data)
@@ -152,7 +172,7 @@ class DocumentsBusinessFragment() : BaseFragment() {
             } ?: showError("Please choose an image!")
 
         } catch (e: IOException) {
-            BaseMethods.finishprogress()
+            BaseMethods.hideProgressDialog()
             showError("Failed to read picture data!")
             e.printStackTrace()
         }
@@ -166,25 +186,25 @@ class DocumentsBusinessFragment() : BaseFragment() {
         compressedImage?.let {
             ar = FileUtils.readFileToByteArray(compressedImage!!)
             if (null != btn && removeBtn != null) {
-                if (ar != null) btn!!.text = getString(R.string.img_uploaded)
+                if (ar != null) btn?.text = getString(R.string.img_uploaded)
                 removeBtn!!.visibility = View.VISIBLE
                 if (case.documents_business_attributes[currentPosition].coordinates_required!!) {
                     if (case.documents_business_attributes[currentPosition].isManualLatLng!!) {
 
-                        containerLatLng!!.visibility = View.VISIBLE
+                        containerLatLng?.visibility = View.VISIBLE
                     } else {
                         registerLocation()
-                        containerLatLng!!.visibility = View.GONE
+                        containerLatLng?.visibility = View.GONE
                     }
                 }
 
                 case.documents_business_attributes[currentPosition].isAdded = true
                 val encodedImage: String = Base64.encodeToString(ar, Base64.DEFAULT)
                 case.documents_business_attributes[currentPosition].documentUrl = encodedImage
-                sharedSubmittedDataViewModel.setSectionCase(case)
+                submissionViewModel.setSectionCase(case)
                 enableButton(validateFields(case.documents_business_attributes))
-                BaseMethods.finishprogress()
-            } else BaseMethods.finishprogress()
+                BaseMethods.hideProgressDialog()
+            } else BaseMethods.hideProgressDialog()
         } ?: showError("Please retake image")
 
 
@@ -206,8 +226,10 @@ class DocumentsBusinessFragment() : BaseFragment() {
 
 
             } else {
-                case.documents_business_attributes[currentPosition].latitude = geoLocationModel.lattitude.toString()
-                case.documents_business_attributes[currentPosition].longitude = geoLocationModel.longitude.toString()
+                case.documents_business_attributes[currentPosition].latitude =
+                    geoLocationModel.lattitude.toString()
+                case.documents_business_attributes[currentPosition].longitude =
+                    geoLocationModel.longitude.toString()
                 showError("" + geoLocationModel.lattitude.toString() + " " + geoLocationModel.longitude.toString())
             }
         } catch (e: Exception) {
@@ -220,7 +242,7 @@ class DocumentsBusinessFragment() : BaseFragment() {
         showError("Please turn on Location from settings and then take picture")
         case.documents_business_attributes[currentPosition].isAdded = false
         case.documents_business_attributes[currentPosition].documentUrl = null
-        sharedSubmittedDataViewModel.setSectionCase(case)
+        submissionViewModel.setSectionCase(case)
         enableButton(validateFields(case.documents_business_attributes))
         btn!!.text = getString(R.string.upload)
         removeBtn!!.visibility = View.GONE
@@ -273,14 +295,14 @@ class DocumentsBusinessFragment() : BaseFragment() {
         val gallery: Button = dialog.findViewById(R.id.gallary)
         camera.setOnClickListener {
             ImagePicker.with(this)
-                    .cameraOnly().start()
+                .cameraOnly().start()
 //            ImagePicker.cameraOnly().start(this)
             case.documents_business_attributes[position].isManualLatLng = false
             dialog.hide()
         }
         gallery.setOnClickListener {
             ImagePicker.with(this)
-                    .galleryOnly().start()
+                .galleryOnly().start()
 //            ImagePicker.create(this) // Activity or Fragment
 //                    .showCamera(false).single().start()
             case.documents_business_attributes[position].isManualLatLng = true

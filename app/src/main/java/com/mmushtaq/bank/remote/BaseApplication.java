@@ -17,7 +17,7 @@ public abstract class BaseApplication extends Application {
     /**
      * @return context
      */
-    public static Context getContext() {
-        return BaseApplication.context;
-    }
+//    public static Context getContext() {
+//        return BaseApplication.context;
+//    }
 }

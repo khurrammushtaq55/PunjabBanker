@@ -16,7 +16,7 @@ import retrofit2.http.Header;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
 
-public interface UserService {
+public interface CaseVerificationService {
 
     @FormUrlEncoded
     @POST("auth/sign_in")
@@ -24,18 +24,18 @@ public interface UserService {
 
     @FormUrlEncoded
     @PUT("profile")
-    Call<LoginModel> reset(@Header("access-token") String access_token,@Header("client") String client,@Header("uid") String uid,
-                           @FieldMap HashMap<String,String> map);
+    Call<LoginModel> reset(@Header("access-token") String access_token, @Header("client") String client, @Header("uid") String uid,
+                           @FieldMap HashMap<String, String> map);
 
     @DELETE("auth/sign_out")
-    Call<CaseModel> sign_out(@Header("access-token") String access_token,@Header("client") String client,@Header("uid") String uid);
+    Call<CaseModel> sign_out(@Header("access-token") String access_token, @Header("client") String client, @Header("uid") String uid);
 
     @GET("cases")
-    Call<CaseModel> getCases(@Header("access-token") String access_token,@Header("client") String client,@Header("uid") String uid,@Header("Accept") String accept);
+    Call<CaseModel> getCases(@Header("access-token") String access_token, @Header("client") String client, @Header("uid") String uid, @Header("Accept") String accept);
 
     @FormUrlEncoded
     @PUT("cases")
     Call<CaseModel> updateCases(@Header("access-token") String access_token, @Header("client") String client, @Header("uid") String uid
-            , @Header("Accept") String accept, @FieldMap ConcurrentHashMap<String,String> map);
+            , @Header("Accept") String accept, @FieldMap ConcurrentHashMap<String, String> map);
 
 }

@@ -33,7 +33,7 @@
                     android:orientation="horizontal">
 
                     <TextView
-                        android:id="@+id/bankName"
+                        android:id="@+id/schemeName"
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:gravity="center"
@@ -41,7 +41,7 @@
                         android:textColor="#424242"
                         android:textStyle="bold"
                         android:padding="20dp"
-                        android:text="Bank Name" />
+                        android:text="Scheme Name" />
 
 
 
@@ -52,12 +52,12 @@
         </RelativeLayout>
 
         <Button
-            android:id="@+id/btnVerify"
+            android:id="@+id/btnCases"
             android:layout_width="250dp"
             android:layout_height="50dp"
             android:layout_gravity="center"
             android:layout_marginTop="-35dp"
-            android:text="Schemes"
+            android:text="Cases"
             android:textColor="#ffffff"
             app:backgroundTint="@color/colorPrimary"
             android:background="#ffffff"

@@ -14,16 +14,15 @@ import com.mmushtaq.bank.R
 import com.mmushtaq.bank.fragments.CaseDetailsFragment
 import com.mmushtaq.bank.model.Case
 import com.mmushtaq.bank.utils.CacheManager
-import com.mmushtaq.bank.viewmodel.SharedViewModel
 import java.util.Locale
 
 
-class CasesAdapter(context: Context, cases: ArrayList<Case>, sharedViewModel: SharedViewModel) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class CasesAdapter(context: Context, cases: ArrayList<Case>) :
+    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private val cases: List<Case>?
     private val mLayoutInflater: LayoutInflater = LayoutInflater.from(context)
     private val context: Context
-    private val sharedViewModel: SharedViewModel
-    private var tempCases:ArrayList<Case>?
+    private var tempCases: ArrayList<Case>?
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val view = mLayoutInflater.inflate(R.layout.item_cases, parent, false)
@@ -40,8 +39,8 @@ class CasesAdapter(context: Context, cases: ArrayList<Case>, sharedViewModel: Sh
             val fm: FragmentManager = (context as FragmentActivity).supportFragmentManager
             val ft: FragmentTransaction = fm.beginTransaction()
 
-            CacheManager.instance?.case = cases!![position]
-            CacheManager.instance?.caseList = cases as ArrayList<Case>
+            CacheManager.case = cases!![position]
+            CacheManager.caseList = cases as ArrayList<Case>
             ft.add(android.R.id.content, CaseDetailsFragment()).addToBackStack(null).commit()
 
         }
@@ -51,7 +50,7 @@ class CasesAdapter(context: Context, cases: ArrayList<Case>, sharedViewModel: Sh
     fun filter(searchText: String) {
         if (searchText.isEmpty()) {
             if (cases != null) {
-                 tempCases = cases.map { it.copy() } as  ArrayList<Case>?
+                tempCases = cases.map { it.copy() } as ArrayList<Case>?
             }
         } else {
 
@@ -62,7 +61,7 @@ class CasesAdapter(context: Context, cases: ArrayList<Case>, sharedViewModel: Sh
                         || case.present_tehsil.toLowerCase(Locale.ROOT).contains(searchText)
                         || case.present_district.toLowerCase(Locale.ROOT).contains(searchText)
                         || case.primary_mobile.toLowerCase(Locale.ROOT).contains(searchText)
-                        ) {
+                    ) {
                         tempCases?.add(case)
                     }
                 }
@@ -97,7 +96,6 @@ class CasesAdapter(context: Context, cases: ArrayList<Case>, sharedViewModel: Sh
     init {
         this.cases = cases
         this.context = context
-        this.sharedViewModel = sharedViewModel
-        this.tempCases = cases.map { it.copy() } as  ArrayList<Case>?
+        this.tempCases = cases.map { it.copy() } as ArrayList<Case>?
     }
 }

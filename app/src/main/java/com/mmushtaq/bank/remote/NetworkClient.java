@@ -26,7 +26,6 @@ public class NetworkClient {
             retrofit = new Retrofit.Builder()
                     .client(okHttpClient)
                     .baseUrl("https://harvester-mis.herokuapp.com/api/v1/")
-//                    .baseUrl("http://127.0.0.1:3001/api/v1")
                     .addConverterFactory(GsonConverterFactory.create(gson))
                     .build();
         }

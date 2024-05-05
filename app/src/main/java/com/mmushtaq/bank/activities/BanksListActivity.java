@@ -2,108 +2,212 @@ package com.mmushtaq.bank.activities;
 
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.FirebaseApp;
 import com.mmushtaq.bank.R;
 import com.mmushtaq.bank.adapter.BanksAdapter;
-import com.mmushtaq.bank.model.Banks;
+import com.mmushtaq.bank.interfaces.NetworkChangeListener;
+import com.mmushtaq.bank.interfaces.ServerResponse;
+import com.mmushtaq.bank.model.Case;
 import com.mmushtaq.bank.model.CaseModel;
-import com.mmushtaq.bank.remote.AppConstants;
-import com.mmushtaq.bank.remote.BaseApplication;
+import com.mmushtaq.bank.receiver.NetworkChangeReceiver;
 import com.mmushtaq.bank.remote.NetworkClient;
 import com.mmushtaq.bank.remote.SharedPreferences;
-import com.mmushtaq.bank.service.UserService;
+import com.mmushtaq.bank.service.CaseVerificationService;
+import com.mmushtaq.bank.utils.AppConstants;
 import com.mmushtaq.bank.utils.BaseMethods;
 import com.mmushtaq.bank.utils.CacheManager;
+import com.mmushtaq.bank.utils.TinyDB;
+import com.mmushtaq.bank.viewmodel.SharedViewModel;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class BanksListActivity extends AppCompatActivity {
+public class BanksListActivity extends AppCompatActivity implements ServerResponse, NetworkChangeListener {
+
+    private Button btnRefresh;
+    private SharedViewModel sharedViewModel;
+    private TinyDB tinyDB;
+    private NetworkChangeReceiver networkChangeReceiver;
+    private CaseModel offlineCaseModel;
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FirebaseApp.initializeApp(this);
         setContentView(R.layout.activity_banklist);
+        initUI();
+        setDefaultUI();
+        handleListener();
+
+
+        if (BaseMethods.INSTANCE.haveNetworkConnection(this) && null == offlineCaseModel)
+        //online case
+        {
+            getCasesFromAPI();
+        } else {
+            //offline case
+            getCasesFromDB();
+        }
+    }
+
+    private void initUI() {
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
+        btnRefresh = findViewById(R.id.btnRefresh);
+        sharedViewModel = new ViewModelProvider(this).get(SharedViewModel.class);
+        tinyDB = new TinyDB(this);
+        sharedViewModel.serverResponse = this;
+        offlineCaseModel = tinyDB.getCaseModel(AppConstants.KEY_ALL_CASES);
 
-           List<Banks> banksList=new ArrayList<>();
-           banksList.add(new Banks("BANK OF PUNJAB"));
+        // Initialize the BroadcastReceiver
+        networkChangeReceiver = new NetworkChangeReceiver(this);
+    }
 
-           RecyclerView bankRecyclerView=findViewById(R.id.bankRecyclerView);
-           TextView pendingCasesCount=findViewById(R.id.pendingCasesCount);
-           TextView newCasesCount=findViewById(R.id.newCasesCount);
-           bankRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-           BanksAdapter bankListAdapter=new BanksAdapter(this,banksList);
-           bankRecyclerView.setAdapter(bankListAdapter);
+    TextView pendingCasesCount, newCasesCount,offlineCasesCount;
 
+    private void setDefaultUI() {
+        pendingCasesCount = findViewById(R.id.pendingCasesCount);
+        newCasesCount = findViewById(R.id.newCasesCount);
 
-           pendingCasesCount.setText(SharedPreferences.getSharedPreferences(AppConstants.KEY_PENDING_COUNT,BanksListActivity.this));
-           newCasesCount.setText(SharedPreferences.getSharedPreferences(AppConstants.KEY_SUBMITTED_COUNT,BanksListActivity.this));
+        pendingCasesCount.setText(String.format(SharedPreferences.getSharedPreferences(AppConstants.KEY_PENDING_COUNT, BanksListActivity.this)));
+        newCasesCount.setText(String.format(SharedPreferences.getSharedPreferences(AppConstants.KEY_SUBMITTED_COUNT, BanksListActivity.this)));
 
+        setOfflineCases();
 
 
     }
+
+    private void setOfflineCases() {
+        offlineCasesCount = findViewById(R.id.offlineCasesCount);
+        if(!tinyDB.getCasesArray(AppConstants.KEY_CASES).isEmpty())
+        {
+            offlineCasesCount.setText(tinyDB.getCasesArray(AppConstants.KEY_CASES).size()+"");
+        }
+        else  offlineCasesCount.setText("0");
+    }
+
+    private void getCasesFromDB() {
+        if (null != offlineCaseModel) {
+            CacheManager.INSTANCE.setCaseModel(offlineCaseModel);
+            setBanksView();
+        }
+    }
+
+    private void handleListener() {
+        btnRefresh.setOnClickListener(view -> {
+            getCasesFromAPI();
+            sendCasesToAPI();
+        });
+    }
+
+    private void sendCasesToAPI() {
+        if (!tinyDB.getCasesArray(AppConstants.KEY_CASES).isEmpty()) {
+//            BaseMethods.INSTANCE.showProgressDialog(this);
+            sharedViewModel.saveCase(tinyDB.getCasesArray(AppConstants.KEY_CASES), SharedPreferences.getSharedPreferences("access-token", BanksListActivity.this),
+                    SharedPreferences.getSharedPreferences("client", BanksListActivity.this),
+                    SharedPreferences.getSharedPreferences("uid", BanksListActivity.this));
+        }
+    }
+
+    private void setRefreshButton(boolean isVisible) {
+
+        btnRefresh.setVisibility(isVisible ? View.VISIBLE : View.GONE);
+    }
+
+    private void setBanksView() {
+
+        RecyclerView bankRecyclerView = findViewById(R.id.bankRecyclerView);
+        bankRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        BanksAdapter bankListAdapter = new BanksAdapter(this, processCases(Objects.requireNonNull(CacheManager.INSTANCE.getCaseModel())));
+        bankRecyclerView.setAdapter(bankListAdapter);
+
+    }
+
+    public static Map<String, List<Case>> processCases(CaseModel caseModel) {
+        List<Case> cases = caseModel.getCases();
+        Map<String, List<Case>> bankSchemeMap = new HashMap<>();
+
+        for (Case caseItem : cases) {
+            String bankName = caseItem.getBank_name();
+            // Check if the bank name is already in the map
+            if (bankSchemeMap.containsKey(bankName)) {
+                // If bank name exists, add the scheme to its list
+                bankSchemeMap.get(bankName).add(caseItem);
+            } else {
+                // If bank name does not exist, create a new list for it and add the scheme
+                List<Case> schemeList = new ArrayList<>();
+                schemeList.add(caseItem);
+                bankSchemeMap.put(bankName, schemeList);
+            }
+        }
+
+        return bankSchemeMap;
+    }
+
     CaseModel caseModel;
 
-    public void getCases(){
+    public void getCasesFromAPI() {
 
-        BaseMethods.Companion.progressdialog(this);
-        UserService userService= NetworkClient.createService(UserService.class);
-        Call<CaseModel> call = userService.getCases(SharedPreferences.getSharedPreferences("access-token", getApplicationContext()),
-                SharedPreferences.getSharedPreferences("client", BaseApplication.getContext())
-        ,SharedPreferences.getSharedPreferences("uid", BaseApplication.getContext()),"*/*");
+        BaseMethods.INSTANCE.showProgressDialog(this);
+        CaseVerificationService caseVerificationService = NetworkClient.createService(CaseVerificationService.class);
+        Call<CaseModel> call = caseVerificationService.getCases(SharedPreferences.getSharedPreferences("access-token", this), SharedPreferences.getSharedPreferences("client", this), SharedPreferences.getSharedPreferences("uid", this), "*/*");
         call.enqueue(new Callback() {
 
             @Override
-            public void onResponse(Call call, retrofit2.Response response) {
+            public void onResponse(@NonNull Call call, @NonNull retrofit2.Response response) {
 
-                BaseMethods.Companion.finishprogress();
-                if(response.isSuccessful()){
+                BaseMethods.INSTANCE.hideProgressDialog();
+                if (response.isSuccessful()) {
 
                     caseModel = (CaseModel) response.body();
-                    if(null!=caseModel  &&  caseModel.getStatus().equals("success")) {
+                    if (null != caseModel && caseModel.getStatus().equals("success")) {
                         SharedPreferences.saveSharedPreference(AppConstants.KEY_SUBMITTED_COUNT, String.valueOf(caseModel.getSubmitted_cases_count()), BanksListActivity.this);
                         SharedPreferences.saveSharedPreference(AppConstants.KEY_PENDING_COUNT, String.valueOf(caseModel.getPending_cases_count()), BanksListActivity.this);
-
-                        //login start main activity
-                        Intent intent = new Intent(BanksListActivity.this, CasesActivity.class);
-//                        intent.putExtra(AppConstants.KEY_CASES_ARRAY, caseModel);
-                        CacheManager.INSTANCE.getInstance().setCaseModel(caseModel);
-                        startActivity(intent);
-                        finish();
+                        pendingCasesCount.setText(String.format(SharedPreferences.getSharedPreferences(AppConstants.KEY_PENDING_COUNT, BanksListActivity.this)));
+                        newCasesCount.setText(String.format(SharedPreferences.getSharedPreferences(AppConstants.KEY_SUBMITTED_COUNT, BanksListActivity.this)));
+                        CacheManager.INSTANCE.setCaseModel(caseModel);
+                        tinyDB.putCaseModel(AppConstants.KEY_ALL_CASES, caseModel);
+                        setBanksView();
 
                     } else {
                         Toast.makeText(BanksListActivity.this, "Error! Please try again!", Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     Toast.makeText(BanksListActivity.this, "Error! Please try again!", Toast.LENGTH_SHORT).show();
-                    Log.e("errror",response.toString());
+                    Log.e("errror", response.toString());
                 }
             }
 
             @Override
             public void onFailure(Call call, Throwable t) {
-                BaseMethods.Companion.finishprogress();
+                BaseMethods.INSTANCE.hideProgressDialog();
                 Toast.makeText(BanksListActivity.this, t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
@@ -113,7 +217,7 @@ public class BanksListActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 
-        getMenuInflater().inflate(R.menu.menu_logout,menu);
+        getMenuInflater().inflate(R.menu.menu_logout, menu);
         return true;
     }
 
@@ -130,62 +234,103 @@ public class BanksListActivity extends AppCompatActivity {
             showLogoutAlert();
             return true;
         }
-        if (item.getItemId() == R.id.item3) {
-
-//            showResetActivity();
-            return true;
-        }
 
         return super.onOptionsItemSelected(item);
     }
 
     private void showResetActivity() {
-        Intent intent=new Intent(BanksListActivity.this,ResetPasswordActivity.class);
+        Intent intent = new Intent(BanksListActivity.this, ResetPasswordActivity.class);
         startActivity(intent);
     }
 
     private void showLogoutAlert() {
 
-        AlertDialog.Builder alertDialog = new AlertDialog.Builder(BanksListActivity.this)
-                .setTitle("Alert").setMessage(getString(R.string.want_to_logout)).setPositiveButton(getString(R.string.yes),
-                        (dialogInterface, i) -> {
-                            dialogInterface.dismiss();
-                            logout();
-                        }).setNegativeButton(android.R.string.no,
-                        (dialogInterface, i) -> dialogInterface.dismiss());
-         alertDialog.setCancelable(false);
+        AlertDialog.Builder alertDialog = new AlertDialog.Builder(BanksListActivity.this).setTitle("Alert").setMessage(getString(R.string.want_to_logout)).setPositiveButton(getString(R.string.yes), (dialogInterface, i) -> {
+            dialogInterface.dismiss();
+            logout();
+        }).setNegativeButton(android.R.string.no, (dialogInterface, i) -> dialogInterface.dismiss());
+        alertDialog.setCancelable(false);
         alertDialog.show();
     }
 
 
     private void logout() {
-        BaseMethods.Companion.progressdialog(this);
+        BaseMethods.INSTANCE.showProgressDialog(this);
 
-        UserService userService = NetworkClient.createService(UserService.class);
-        Call call = userService.sign_out(SharedPreferences.getSharedPreferences("access-token", BaseApplication.getContext()),
-                SharedPreferences.getSharedPreferences("client", BaseApplication.getContext()),
-                SharedPreferences.getSharedPreferences("uid", BaseApplication.getContext()));
+        CaseVerificationService caseVerificationService = NetworkClient.createService(CaseVerificationService.class);
+        Call call = caseVerificationService.sign_out(SharedPreferences.getSharedPreferences("access-token", this), SharedPreferences.getSharedPreferences("client", this), SharedPreferences.getSharedPreferences("uid", this));
         call.enqueue(new Callback() {
             @Override
             public void onResponse(Call call, Response response) {
-                BaseMethods.Companion.finishprogress();
-                if(response.isSuccessful()){
-                    SharedPreferences.saveSharedPreference(AppConstants.KEY_SHARED_PREFERENCE_LOGGED,
-                            AppConstants.NO, BaseApplication.getContext());
+                BaseMethods.INSTANCE.hideProgressDialog();
+                if (response.isSuccessful()) {
+                    SharedPreferences.saveSharedPreference(AppConstants.KEY_SHARED_PREFERENCE_LOGGED, AppConstants.NO, getApplicationContext());
+                    tinyDB.clear();
                     finish();
                     startActivity(new Intent(BanksListActivity.this, LoginActivity.class));
-                }else
+                } else
                     Toast.makeText(BanksListActivity.this, "Error! Please try again!", Toast.LENGTH_SHORT).show();
 
             }
 
             @Override
             public void onFailure(Call call, Throwable t) {
-                BaseMethods.Companion.finishprogress();
+                BaseMethods.INSTANCE.hideProgressDialog();
                 Toast.makeText(BanksListActivity.this, "Error! Please try again!", Toast.LENGTH_SHORT).show();
             }
         });
 
     }
 
+    public void goToSchemas(List<Case> schemedCases) {
+
+        CacheManager.INSTANCE.setSchemedCases(schemedCases);
+        startActivity(new Intent(BanksListActivity.this, SchemeActivity.class));
+
+    }
+
+    @Override
+    public void onSuccess(@NonNull Response<CaseModel> message) {
+        tinyDB.remove(AppConstants.KEY_CASES);
+        setOfflineCases();
+
+    }
+
+    @Override
+    public void onFailure(@Nullable String message) {
+        BaseMethods.INSTANCE.hideProgressDialog();
+    }
+
+    @Override
+    public void onCaseSuccess(@NonNull Response<CaseModel> message) {
+        BaseMethods.INSTANCE.hideProgressDialog();
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+        registerReceiver(networkChangeReceiver, filter);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        unregisterReceiver(networkChangeReceiver);
+    }
+
+    @Override
+    public void onNetworkAvailable() {
+        setRefreshButton(true);
+    }
+
+    @Override
+    public void onNetworkUnavailable() {
+        setRefreshButton(false);
+    }
 }

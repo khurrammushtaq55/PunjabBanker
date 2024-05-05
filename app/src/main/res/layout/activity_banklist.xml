@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <LinearLayout
+        android:id="@+id/mainLinear"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
@@ -33,7 +34,7 @@
                 <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:src="@drawable/ic_submit" />
+                    android:src="@drawable/ic_submitted" />
                 <TextView
                     android:id="@+id/newCasesCount"
                     android:layout_width="match_parent"
@@ -42,7 +43,7 @@
                     android:layout_marginTop="7dp"
                     android:textColor="#0E0E0E"
                     android:textStyle="bold"
-                    android:text="120" />
+                    android:text="0" />
 
                 <TextView
                     android:id="@+id/newCases"
@@ -90,7 +91,7 @@
                 android:layout_marginTop="7dp"
                 android:textColor="#0E0E0E"
                 android:textStyle="bold"
-                android:text="12" />
+                android:text="0" />
 
             <TextView
                 android:id="@+id/pendingCases"
@@ -104,11 +105,69 @@
             </LinearLayout>
 
         </androidx.cardview.widget.CardView>
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cv_offlineCases"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:elevation="10dp"
+            app:cardBackgroundColor="#fcfcfc"
+            app:cardCornerRadius="10dp"
+            app:cardElevation="10dp"
+            app:cardPreventCornerOverlap="false"
+            app:cardUseCompatPadding="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:padding="10dp"
+                android:orientation="vertical">
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_offline" />
+                <TextView
+                    android:id="@+id/offlineCasesCount"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="7dp"
+                    android:textColor="#0E0E0E"
+                    android:textStyle="bold"
+                    android:text="0" />
+
+                <TextView
+                    android:id="@+id/offlineCases"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="#817878"
+                    android:layout_marginTop="7dp"
+                    android:layout_marginBottom="7dp"
+                    android:text="Offline Cases" />
+
+            </LinearLayout>
+
+        </androidx.cardview.widget.CardView>
 
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/bankRecyclerView"
+        android:layout_below="@+id/mainLinear"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-</LinearLayout>
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/btnRefresh"/>
+
+
+    <Button
+        android:id="@+id/btnRefresh"
+        android:layout_alignParentBottom="true"
+        android:layout_gravity="bottom"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@color/colorPrimary"
+        android:textColor="@color/quantum_white_100"
+        android:text="SYNC AND REFRESH"
+        />
+</RelativeLayout>

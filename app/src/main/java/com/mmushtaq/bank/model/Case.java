@@ -8,6 +8,8 @@ public class Case implements Serializable {
 
     public int id;
     public String name;
+    public String bank_name;
+    public String scheme;
     public String cnic;
     public String father_or_husband_name;
     public String gender;
@@ -50,6 +52,23 @@ public class Case implements Serializable {
 
     public void setDocuments_residence_attributes(ArrayList<Documents> documents_residence_attributes) {
         this.documents_residence_attributes = documents_residence_attributes;
+    }
+
+
+    public String getBank_name() {
+        return bank_name;
+    }
+
+    public void setBank_name(String bank_name) {
+        this.bank_name = bank_name;
+    }
+
+    public String getScheme() {
+        return scheme;
+    }
+
+    public void setScheme(String scheme) {
+        this.scheme = scheme;
     }
 
     public ArrayList<Header> getHeader() {

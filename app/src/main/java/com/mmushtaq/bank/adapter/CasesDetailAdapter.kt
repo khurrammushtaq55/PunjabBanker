@@ -9,7 +9,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.mmushtaq.bank.R
 import com.mmushtaq.bank.model.Header
 
-class CasesDetailAdapter(context: Context, headers: MutableList<Header>) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class CasesDetailAdapter(context: Context, headers: MutableList<Header>) :
+    RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private val headers: List<Header>?
     private val mLayoutInflater: LayoutInflater = LayoutInflater.from(context)
     private val context: Context

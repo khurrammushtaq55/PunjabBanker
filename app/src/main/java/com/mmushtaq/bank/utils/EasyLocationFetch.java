@@ -138,7 +138,7 @@ public class EasyLocationFetch extends AppCompatActivity {
                         addressFetch(lattitude, longitude);
                         data.setLattitude(lattitude);
                         data.setLongitude(longitude);
-                        if ( !BaseMethods.Companion.isNullOrEmptyString(address) ) {
+                        if ( !BaseMethods.INSTANCE.isNullOrEmptyString(address) ) {
                             data.setAddress(address);
                         }
                         else {

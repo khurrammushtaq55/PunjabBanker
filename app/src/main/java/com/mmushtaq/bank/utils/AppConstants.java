@@ -1,10 +1,9 @@
-package com.mmushtaq.bank.remote;
+package com.mmushtaq.bank.utils;
 
 public class AppConstants {
 
     public static String YES="Y";
     public static String NO="N";
-    public static String KEY_CASES_ARRAY="KEY_CASES_ARRAY";
     public static String KEY_CASES="KEY_CASES";
     public static String KEY_ALL_CASES="KEY_ALL_CASES";
     public static String KEY_SHARED_PREFERENCE_LOGGED="KEY_SHARED_PREFERENCE_LOGGED";

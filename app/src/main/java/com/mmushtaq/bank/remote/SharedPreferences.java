@@ -1,13 +1,10 @@
 package com.mmushtaq.bank.remote;
 
-import android.app.Application;
+import static android.content.Context.MODE_PRIVATE;
+
 import android.content.Context;
 
-import com.google.gson.Gson;
 import com.mmushtaq.bank.R;
-import com.mmushtaq.bank.model.LoginModel;
-
-import static android.content.Context.MODE_PRIVATE;
 
 public class SharedPreferences {
 
@@ -22,7 +19,7 @@ public class SharedPreferences {
     }
 
     // for string only
-    public static String getSharedPreferences(String key,Context context) {
+    public static String getSharedPreferences(String key, Context context) {
 
         if (null != key) {
             if (context != null) {
@@ -33,19 +30,5 @@ public class SharedPreferences {
             }
         }
         return "";
-    }
-
-    public static LoginModel getObjectSharedPreferences(String key, Context context) {
-
-        if (null != key) {
-            if (context != null) {
-                android.content.SharedPreferences sharedPreferences = context.getSharedPreferences(context.getString(R.string.app_name), MODE_PRIVATE);
-                if (null != sharedPreferences.getString(key, "")) {
-                    Gson gson = new Gson();
-                    return gson.fromJson(sharedPreferences.getString(key, ""), LoginModel.class);
-                }
-            }
-        }
-        return null;
     }
 }

@@ -9,32 +9,33 @@ import com.mmushtaq.bank.model.Case
 import com.mmushtaq.bank.model.CaseModel
 
 class TinyDB(context: Context) {
-    private val preferences: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+    private val preferences: SharedPreferences =
+        PreferenceManager.getDefaultSharedPreferences(context)
 
     private fun getString(key: String?): String {
-        if(preferences.contains(key)) {
+        if (preferences.contains(key)) {
             return preferences.getString(key, "")!!
         }
         return ""
     }
 
-    fun getObject(key: String?): ArrayList<Case>? {
+    fun getCasesArray(key: String?): ArrayList<Case> {
         val json = getString(key)
-        if(json.isNotEmpty()) {
+        if (json.isNotEmpty()) {
             val list: ArrayList<Case>
             val gson = GsonBuilder().create()
-            list = gson.fromJson(json,Array<Case>::class.java).toMutableList() as ArrayList<Case>
+            list = gson.fromJson(json, Array<Case>::class.java).toMutableList() as ArrayList<Case>
             return list
         }
         return ArrayList<Case>()
     }
 
-    fun getCaseObject(key: String?): CaseModel? {
+    fun getCaseModel(key: String?): CaseModel? {
         val json = getString(key)
-        if(json.isNotEmpty()) {
-            val case:CaseModel
+        if (json.isNotEmpty()) {
+            val case: CaseModel
             val gson = GsonBuilder().create()
-            case = gson.fromJson(json,CaseModel::class.java) as CaseModel
+            case = gson.fromJson(json, CaseModel::class.java) as CaseModel
             return case
         }
         return null
@@ -44,16 +45,16 @@ class TinyDB(context: Context) {
         preferences.edit().putString(key, value).apply()
     }
 
-    fun putObject(key: String?, obj: ArrayList<Case>?) {
+    fun putCasesArray(key: String?, obj: ArrayList<Case>?) {
         val gson = Gson()
-        if(null != obj) {
+        if (null != obj) {
             putString(key, gson.toJson(obj))
         }
     }
 
-    fun putCaseObject(key: String?, obj: CaseModel?) {
+    fun putCaseModel(key: String?, obj: CaseModel?) {
         val gson = Gson()
-        if(null != obj) {
+        if (null != obj) {
             putString(key, gson.toJson(obj))
         }
     }

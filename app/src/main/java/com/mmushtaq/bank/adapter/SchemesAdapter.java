@@ -10,7 +10,7 @@ import android.widget.TextView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.mmushtaq.bank.R;
-import com.mmushtaq.bank.activities.BanksListActivity;
+import com.mmushtaq.bank.activities.SchemeActivity;
 import com.mmushtaq.bank.model.Case;
 
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class BanksAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class SchemesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private final LayoutInflater mLayoutInflater;
     private final Context context;
@@ -27,7 +27,7 @@ public class BanksAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     private final Map<String, List<Case>> banksList;
 
 
-    public BanksAdapter(Context context, Map<String, List<Case>> banksList) {
+    public SchemesAdapter(Context context, Map<String, List<Case>> banksList) {
         this.mLayoutInflater = LayoutInflater.from(context);
         this.context = context;
         this.banksList = banksList;
@@ -38,7 +38,7 @@ public class BanksAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     @NotNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NotNull ViewGroup parent, int viewType) {
-        View view = mLayoutInflater.inflate(R.layout.item_banks, parent, false);
+        View view = mLayoutInflater.inflate(R.layout.item_schemes, parent, false);
         return new MyViewHolder(view);
 
     }
@@ -47,9 +47,9 @@ public class BanksAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     public void onBindViewHolder(@NotNull RecyclerView.ViewHolder holder, int position) {
 
 
-        final BanksAdapter.MyViewHolder viewHolder = (BanksAdapter.MyViewHolder) holder;
-        viewHolder.bankName.setText(keys.get(position));
-        viewHolder.btnGetCases.setOnClickListener(view -> ((BanksListActivity) context).goToSchemas(banksList.getOrDefault(keys.get(position), null)));
+        final SchemesAdapter.MyViewHolder viewHolder = (SchemesAdapter.MyViewHolder) holder;
+        viewHolder.schemeName.setText(keys.get(position));
+        viewHolder.btnCases.setOnClickListener(view -> ((SchemeActivity) context).goToCaseList(banksList.getOrDefault(keys.get(position), null)));
 
 
     }
@@ -67,14 +67,14 @@ public class BanksAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
 
     private class MyViewHolder extends RecyclerView.ViewHolder {
-        Button btnGetCases;
-        TextView bankName;
+        Button btnCases;
+        TextView schemeName;
 
         public MyViewHolder(View itemView) {
             super(itemView);
 
-            btnGetCases = itemView.findViewById(R.id.btnVerify);
-            bankName = itemView.findViewById(R.id.bankName);
+            btnCases = itemView.findViewById(R.id.btnCases);
+            schemeName = itemView.findViewById(R.id.schemeName);
 
 
         }

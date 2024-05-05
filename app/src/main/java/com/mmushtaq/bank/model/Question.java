@@ -14,8 +14,8 @@ public class Question implements Serializable {
     private boolean mandatory = false;
     private String keyboard_type;
     private boolean isFieldFilled = false;
-    private int max_length ;
-    private int min_length ;
+    private int max_length;
+    private int min_length;
 
     public String getKeyboard_type() {
         return keyboard_type;
@@ -68,6 +68,7 @@ public class Question implements Serializable {
     public void setSelectedAnswer(String selectedAnswer) {
         this.selectedAnswer = selectedAnswer;
     }
+
     public String getDescription() {
         return description;
     }

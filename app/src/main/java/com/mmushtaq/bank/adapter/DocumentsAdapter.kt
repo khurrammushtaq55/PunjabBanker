@@ -14,13 +14,17 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.mmushtaq.bank.R
 import com.mmushtaq.bank.model.Documents
-import com.mmushtaq.bank.remote.AppConstants
+import com.mmushtaq.bank.utils.AppConstants
 import kotlin.reflect.KFunction1
 
-class DocumentsAdapter(context: Context, cases: List<Documents>?,
-                       val itemClick: KFunction1<String, Unit>,
-                       private val clickListener: ((position: Int, view: Button, cancel: ImageView, container: ConstraintLayout) -> Unit)? = null
-                       , private val removeItem: ((position: Int) -> Unit)? = null) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class DocumentsAdapter(
+    context: Context,
+    cases: List<Documents>?,
+    val itemClick: KFunction1<String, Unit>,
+    private val clickListener: ((position: Int, view: Button, cancel: ImageView, container: ConstraintLayout) -> Unit)? = null,
+    private val removeItem: ((position: Int) -> Unit)? = null
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+
     private val docsList: ArrayList<Documents>?
     private val mLayoutInflater: LayoutInflater
     private val context: Context
@@ -34,40 +38,48 @@ class DocumentsAdapter(context: Context, cases: List<Documents>?,
         val viewHolder = holder as MyViewHolder
         val document = docsList!![position]
 
-        setData(document,viewHolder)
+        setData(document, viewHolder)
 
-        setCrossVisibilty(document,viewHolder)
+        setCrossVisibilty(document, viewHolder)
 
-        setListener(viewHolder,document,position)
+        setListener(viewHolder, document, position)
 
-        if(document.coordinates_required!! && document.isManualLatLng!! &&
-                viewHolder.upload.text==context.getString(R.string.img_uploaded))
-        {
-          viewHolder.latLngContainer.visibility=View.VISIBLE
+        if (document.coordinates_required!! && document.isManualLatLng!! &&
+            viewHolder.upload.text == context.getString(R.string.img_uploaded)
+        ) {
+            viewHolder.latLngContainer.visibility = View.VISIBLE
             viewHolder.latitude.setText(document.latitude!!)
             viewHolder.longitude.setText(document.longitude!!)
 
+        } else {
+            viewHolder.latLngContainer.visibility = View.GONE
         }
-        else {viewHolder.latLngContainer.visibility=View.GONE}
     }
 
     private fun setListener(viewHolder: MyViewHolder, cas: Documents, position: Int) {
         viewHolder.upload.setOnClickListener {
-            clickListener?.let { it1 -> it1(
+            clickListener?.let { it1 ->
+                it1(
 
-                    position,viewHolder.upload , viewHolder.remDoc , viewHolder.latLngContainer
+                    position, viewHolder.upload, viewHolder.remDoc, viewHolder.latLngContainer
 
-            ) }
+                )
+            }
             viewHolder.latitude.addTextChangedListener(object : TextWatcher {
                 override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {
                     if (s.isNotEmpty()) {
                         cas.latitude = s.toString()
                         docsList?.set(position, cas)
-                       itemClick(s.toString())
+                        itemClick(s.toString())
                     }
                 }
 
-                override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {
+                override fun beforeTextChanged(
+                    s: CharSequence,
+                    start: Int,
+                    count: Int,
+                    after: Int
+                ) {
 
                 }
 
@@ -84,7 +96,12 @@ class DocumentsAdapter(context: Context, cases: List<Documents>?,
                     }
                 }
 
-                override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {
+                override fun beforeTextChanged(
+                    s: CharSequence,
+                    start: Int,
+                    count: Int,
+                    after: Int
+                ) {
 
                 }
 
@@ -114,7 +131,7 @@ class DocumentsAdapter(context: Context, cases: List<Documents>?,
 
     private fun setData(cas: Documents, viewHolder: MyViewHolder) {
 
-        if(!cas.description.isNullOrEmpty()) {
+        if (!cas.description.isNullOrEmpty()) {
             if (cas.nature == AppConstants.KEY_MANDATORY) {
                 viewHolder.docName.text = """${cas.description}*"""
             } else {
@@ -132,10 +149,11 @@ class DocumentsAdapter(context: Context, cases: List<Documents>?,
     override fun getItemId(position: Int): Long {
         return position.toLong()
     }
-    fun  getFilledData() : ArrayList<Documents>?
-    {
+
+    fun getFilledData(): ArrayList<Documents>? {
         return docsList
     }
+
     private inner class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var upload: Button = itemView.findViewById(R.id.docAttach)
         var docName: TextView = itemView.findViewById(R.id.docName)
@@ -146,7 +164,6 @@ class DocumentsAdapter(context: Context, cases: List<Documents>?,
 
 
     }
-
 
 
     init {

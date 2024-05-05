@@ -14,16 +14,17 @@ import com.mmushtaq.bank.R
 import com.mmushtaq.bank.activities.BanksListActivity
 import com.mmushtaq.bank.activities.CasesActivity
 import com.mmushtaq.bank.adapter.SectionsAdapter
+import com.mmushtaq.bank.interfaces.ServerResponse
 import com.mmushtaq.bank.model.Case
 import com.mmushtaq.bank.model.CaseModel
 import com.mmushtaq.bank.model.Section
-import com.mmushtaq.bank.remote.AppConstants
 import com.mmushtaq.bank.remote.SharedPreferences
+import com.mmushtaq.bank.utils.AppConstants
 import com.mmushtaq.bank.utils.BaseMethods
 import com.mmushtaq.bank.utils.CacheManager.case
 import com.mmushtaq.bank.utils.TinyDB
-import com.mmushtaq.bank.viewmodel.SectionsViewModel
-import com.mmushtaq.bank.viewmodel.SharedSubmittedDataViewModel
+import com.mmushtaq.bank.viewmodel.SharedViewModel
+import com.mmushtaq.bank.viewmodel.SubmissionViewModel
 import kotlinx.android.synthetic.main.sections_dynamic_fragment.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,30 +32,37 @@ import kotlinx.coroutines.launch
 import retrofit2.Response
 
 
-class SectionsDynamicFragment(var index: Int) : BaseFragment(),
-        SectionsViewModel.ServerResponse, SectionsAdapter.ValidateFieldListner {
+class SectionsDynamicFragment(private var index: Int) : BaseFragment(),
+    ServerResponse, SectionsAdapter.ValidateFieldListner {
 
-    private lateinit var sharedViewModel: SharedSubmittedDataViewModel
+    private lateinit var submittedDataViewModel: SubmissionViewModel
     private lateinit var sectionsAdapter: SectionsAdapter
-    private lateinit var viewModel: SectionsViewModel
+    private lateinit var viewModel: SharedViewModel
 
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.sections_dynamic_fragment, container, false)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        viewModel = ViewModelProvider(this).get(SectionsViewModel::class.java)
+        viewModel = ViewModelProvider(this).get(SharedViewModel::class.java)
         viewModel.serverResponse = this
 
-        sharedViewModel = ViewModelProvider(this).get(SharedSubmittedDataViewModel::class.java)
-        sharedViewModel.setSectionCase(case)
+        submittedDataViewModel = ViewModelProvider(this).get(SubmissionViewModel::class.java)
+        submittedDataViewModel.setSectionCase(case)
 
         BaseMethods.hideKeyboard(requireActivity())
 
+        if (case.sections == null) {
+            Toast.makeText(activity, "There are no Sections against this Case", Toast.LENGTH_SHORT)
+                .show()
+            return
+        }
 
         enableButton(validateFields(case.sections[index]))
 
@@ -72,7 +80,7 @@ class SectionsDynamicFragment(var index: Int) : BaseFragment(),
         viewModel.getQuestions().observe(viewLifecycleOwner, Observer {
             sectionsAdapter.submitList(it, index)
         })
-        viewModel.setQyestionsArray(sharedViewModel.getCaseModel().value!!.getSections()[index].questions)
+        viewModel.setQyestionsArray(submittedDataViewModel.getCaseModel().value!!.getSections()[index].questions)
 
     }
 
@@ -84,27 +92,31 @@ class SectionsDynamicFragment(var index: Int) : BaseFragment(),
             val section = case.sections[index]
             section.questions = sectionsAdapter.getFilledData()
             case.sections[index] = section
-            sharedViewModel.setSectionCase(case)
+            submittedDataViewModel.setSectionCase(case)
 
 
             if ((index + 1) < case.sections.size) {
                 val ft = activity?.supportFragmentManager?.beginTransaction()
                 if (case.sections[index + 1].type == (getString(R.string.agent_info))) {
-                    ft?.add(android.R.id.content, SectionsDynamicFragment(index + 2))?.addToBackStack(null)?.commit()
+                    ft?.add(android.R.id.content, SectionsDynamicFragment(index + 2))
+                        ?.addToBackStack(null)?.commit()
                 } else {
-                    ft?.add(android.R.id.content, SectionsDynamicFragment(index + 1))?.addToBackStack(null)?.commit()
+                    ft?.add(android.R.id.content, SectionsDynamicFragment(index + 1))
+                        ?.addToBackStack(null)?.commit()
                 }
 
             } else {
 
                 if (null != case.documents_business_attributes && case.documents_business_attributes.size > 0) {
                     val ft = activity?.supportFragmentManager?.beginTransaction()
-                    ft?.add(android.R.id.content, DocumentsBusinessFragment())?.addToBackStack("DocumentsResidenceFragment")?.commit()
+                    ft?.add(android.R.id.content, DocumentsBusinessFragment())
+                        ?.addToBackStack("DocumentsResidenceFragment")?.commit()
 
                 } else {
 
                     val ft = activity?.supportFragmentManager?.beginTransaction()
-                    ft?.add(android.R.id.content, SubmissionFragment())?.addToBackStack("SubmissionFragment")?.commit()
+                    ft?.add(android.R.id.content, SubmissionFragment())
+                        ?.addToBackStack("SubmissionFragment")?.commit()
 
                     // goto final screen for submission
                     //take all this code to that screen todo
@@ -119,42 +131,56 @@ class SectionsDynamicFragment(var index: Int) : BaseFragment(),
                  }*/
             }
         }
-/*
-        isPartner.setOnCheckedChangeListener(object : CompoundButton.OnCheckedChangeListener {
-            override fun onCheckedChanged(buttonView: CompoundButton?, isChecked: Boolean) {
-                if (isChecked) {
-                    addPartnerRV.visibility = View.VISIBLE
-                } else {
-                    addPartnerRV.visibility = View.GONE
-                }
-            }
-        })*/
+        /*
+                isPartner.setOnCheckedChangeListener(object : CompoundButton.OnCheckedChangeListener {
+                    override fun onCheckedChanged(buttonView: CompoundButton?, isChecked: Boolean) {
+                        if (isChecked) {
+                            addPartnerRV.visibility = View.VISIBLE
+                        } else {
+                            addPartnerRV.visibility = View.GONE
+                        }
+                    }
+                })*/
     }
 
     private fun showAlertDialog(message: String, list: ArrayList<Case>) {
         AlertDialog.Builder(requireActivity())
 //                .setTitle("Alert")
-                .setMessage(message)
-                .setCancelable(false)
-                .setNeutralButton(getString(R.string.cancel)) { dialog, which ->
-                    BaseMethods.finishprogress()
-                }
+            .setMessage(message)
+            .setCancelable(false)
+            .setNeutralButton(getString(R.string.cancel)) { dialog, which ->
+                BaseMethods.hideProgressDialog()
+            }
 
-                .setPositiveButton(getString(R.string.save)) { dialog, which ->
-                    CoroutineScope(Dispatchers.IO).launch {
-                        addDateTime(list);
-                        if (message == (getString(R.string.submit_form_msg))) {
-                            viewModel.saveCase(list)
-                        } else {
-                            addCasesInTinyDb()
-
-                        }
-
+            .setPositiveButton(getString(R.string.save)) { dialog, which ->
+                CoroutineScope(Dispatchers.IO).launch {
+                    addDateTime(list);
+                    if (message == (getString(R.string.submit_form_msg))) {
+                        viewModel.saveCase(
+                            list,
+                            SharedPreferences.getSharedPreferences(
+                                "access-token",
+                                activity
+                            ),
+                            SharedPreferences.getSharedPreferences(
+                                "client",
+                                activity
+                            ),
+                            SharedPreferences.getSharedPreferences(
+                                "uid",
+                                activity
+                            )
+                        )
+                    } else {
+                        addCasesInTinyDb()
 
                     }
 
+
                 }
-                .show()
+
+            }
+            .show()
     }
 
     private fun addDateTime(cases: ArrayList<Case>) {
@@ -183,26 +209,25 @@ class SectionsDynamicFragment(var index: Int) : BaseFragment(),
 
     private fun addCasesInTinyDb() {
         val tinyDb = TinyDB(requireActivity())
-        if (null != tinyDb.getObject(AppConstants.KEY_CASES)) {
-            if (tinyDb.getObject(AppConstants.KEY_CASES).isNullOrEmpty()) {
-                tinyDb.putObject(AppConstants.KEY_CASES, arrayListOf(case))
+        if (null != tinyDb.getCasesArray(AppConstants.KEY_CASES)) {
+            if (tinyDb.getCasesArray(AppConstants.KEY_CASES).isNullOrEmpty()) {
+                tinyDb.putCasesArray(AppConstants.KEY_CASES, arrayListOf(case))
             } else {
-                val newList = tinyDb.getObject(AppConstants.KEY_CASES)
+                val newList = tinyDb.getCasesArray(AppConstants.KEY_CASES)
                 newList!!.add(case)
-                tinyDb.putObject(AppConstants.KEY_CASES, newList)
+                tinyDb.putCasesArray(AppConstants.KEY_CASES, newList)
             }
         }
 
-        val allCaseArray : CaseModel?  = tinyDb.getCaseObject(AppConstants.KEY_ALL_CASES)!!
+        val allCaseArray: CaseModel? = tinyDb.getCaseModel(AppConstants.KEY_ALL_CASES)!!
 
-        for (i in 0..allCaseArray?.cases?.size!!)
-        {
-            if(allCaseArray.cases[i].id==case.id) {
+        for (i in 0..allCaseArray?.cases?.size!!) {
+            if (allCaseArray.cases[i].id == case.id) {
                 allCaseArray.cases.removeAt(i)
                 break
             }
         }
-        tinyDb.putCaseObject(AppConstants.KEY_ALL_CASES, allCaseArray)
+        tinyDb.putCaseModel(AppConstants.KEY_ALL_CASES, allCaseArray)
         requireActivity().finish()
         val intent = Intent(activity, CasesActivity::class.java)
         startActivity(intent)
@@ -210,17 +235,25 @@ class SectionsDynamicFragment(var index: Int) : BaseFragment(),
     }
 
     override fun onSuccess(message: Response<CaseModel>) {
-        SharedPreferences.saveSharedPreference(AppConstants.KEY_SUBMITTED_COUNT, message.body()?.submitted_cases_count.toString(), activity)
-        SharedPreferences.saveSharedPreference(AppConstants.KEY_PENDING_COUNT, message.body()?.pending_cases_count.toString(), activity)
+        SharedPreferences.saveSharedPreference(
+            AppConstants.KEY_SUBMITTED_COUNT,
+            message.body()?.submitted_cases_count.toString(),
+            activity
+        )
+        SharedPreferences.saveSharedPreference(
+            AppConstants.KEY_PENDING_COUNT,
+            message.body()?.pending_cases_count.toString(),
+            activity
+        )
 
-        BaseMethods.finishprogress()
+        BaseMethods.hideProgressDialog()
         Toast.makeText(activity, "Case Submitted Successfully", Toast.LENGTH_SHORT).show()
         requireActivity().finish()
         startActivity(Intent(activity, BanksListActivity::class.java))
     }
 
     override fun onFailure(message: String?) {
-        BaseMethods.finishprogress()
+        BaseMethods.hideProgressDialog()
         Toast.makeText(activity, "Error Occur! Please try again", Toast.LENGTH_SHORT).show()
 
     }
@@ -232,13 +265,12 @@ class SectionsDynamicFragment(var index: Int) : BaseFragment(),
         var fieldStatus = true
         var finalStatus = true
         section.questions.forEach { it ->
-            val isValid =null != it.selectedAnswer && it.selectedAnswer.length>=it.min_length
+            val isValid = null != it.selectedAnswer && it.selectedAnswer.length >= it.min_length
             if (it.isMandatory && isValid) {
                 fieldStatus = true
             } else if (it.isMandatory && !isValid) {
                 return false
-            } else if(!it.isMandatory)
-            {
+            } else if (!it.isMandatory) {
                 fieldStatus = true
             }
             if (!fieldStatus) {

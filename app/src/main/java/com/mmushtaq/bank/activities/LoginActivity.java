@@ -1,6 +1,8 @@
 package com.mmushtaq.bank.activities;
 
 
+import static com.mmushtaq.bank.utils.AppConstants.KEY_SHARED_PREFERENCE_LOGGED;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
@@ -11,10 +13,10 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.mmushtaq.bank.R;
 import com.mmushtaq.bank.model.LoginModel;
-import com.mmushtaq.bank.remote.AppConstants;
 import com.mmushtaq.bank.remote.NetworkClient;
 import com.mmushtaq.bank.remote.SharedPreferences;
-import com.mmushtaq.bank.service.UserService;
+import com.mmushtaq.bank.service.CaseVerificationService;
+import com.mmushtaq.bank.utils.AppConstants;
 import com.mmushtaq.bank.utils.BaseMethods;
 
 import org.jetbrains.annotations.NotNull;
@@ -25,8 +27,6 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-import static com.mmushtaq.bank.remote.AppConstants.KEY_SHARED_PREFERENCE_LOGGED;
-
 public class LoginActivity extends AppCompatActivity {
 
     EditText edtUsername;
@@ -36,11 +36,14 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if( BaseMethods.Companion.isLogin() ) {
-            if ( BaseMethods.Companion.haveNetworkConnection(this) )
-                gotoBankActivity();
-            else gotoCasesActivity();
-        }   else {
+
+
+        if (BaseMethods.INSTANCE.isLogin(LoginActivity.this)) {
+            gotoBankActivity();
+//            if (BaseMethods.Companion.haveNetworkConnection(this))
+//                gotoBankActivity();
+//            else gotoCasesActivity();
+        } else {
             setContentView(R.layout.activity_login);
 
             HashSet<Integer> ab = new HashSet<>();
@@ -48,11 +51,13 @@ public class LoginActivity extends AppCompatActivity {
             edtUsername = findViewById(R.id.input_email);
             edtPassword = findViewById(R.id.input_password);
             btnLogin = findViewById(R.id.btn_login);
+//            edtUsername.setText("test@hspl.com");
+//            edtPassword.setText("carrot123@Qs");
             btnLogin.setOnClickListener(v -> {
                 String username = edtUsername.getText().toString();
                 String password = edtPassword.getText().toString();
                 //validate form
-                if ( validate() ) {
+                if (validate()) {
                     //do login
                     doLogin(username, password);
                 }
@@ -66,6 +71,7 @@ public class LoginActivity extends AppCompatActivity {
         startActivity(intent);
         finish();
     }
+
     private void gotoCasesActivity() {
         Intent intent = new Intent(LoginActivity.this, CasesActivity.class);
         startActivity(intent);
@@ -73,59 +79,56 @@ public class LoginActivity extends AppCompatActivity {
     }
 
 
-    private void doLogin(final String username,final String password){
-        BaseMethods.Companion.progressdialog(LoginActivity.this);
-        UserService userService = NetworkClient.createService(UserService.class);
-        Call<LoginModel> call = userService.login(username, password, "mobile");
+    private void doLogin(final String username, final String password) {
+        BaseMethods.INSTANCE.showProgressDialog(LoginActivity.this);
+        CaseVerificationService caseVerificationService = NetworkClient.createService(CaseVerificationService.class);
+        Call<LoginModel> call = caseVerificationService.login(username, password, "mobile");
         call.enqueue(new Callback() {
             @Override
             public void onResponse(Call call, @NotNull Response response) {
 
-                if(response.isSuccessful()){
+                if (response.isSuccessful()) {
                     LoginModel loginModel = (LoginModel) response.body();
                     String access_token = response.headers().get("access-token");
                     String client = response.headers().get("client");
                     String uid = response.headers().get("uid");
-                    SharedPreferences.saveSharedPreference(AppConstants.KEY_PWD,password,LoginActivity.this);
+                    SharedPreferences.saveSharedPreference(AppConstants.KEY_PWD, password, LoginActivity.this);
 
-                    SharedPreferences.saveSharedPreference("access-token",access_token,LoginActivity.this);
-                    SharedPreferences.saveSharedPreference("client",client,LoginActivity.this);
-                    SharedPreferences.saveSharedPreference("uid",uid,LoginActivity.this);
+                    SharedPreferences.saveSharedPreference("access-token", access_token, LoginActivity.this);
+                    SharedPreferences.saveSharedPreference("client", client, LoginActivity.this);
+                    SharedPreferences.saveSharedPreference("uid", uid, LoginActivity.this);
 
-                    if(null!=loginModel  &&  loginModel.getStatus().equals("success")){
+                    if (null != loginModel && loginModel.getStatus().equals("success")) {
                         //login start main activity
                         SharedPreferences.saveSharedPreference(AppConstants.KEY_FN, loginModel.getData().getFirst_name(), LoginActivity.this);
                         SharedPreferences.saveSharedPreference(AppConstants.KEY_LN, loginModel.getData().getLast_name(), LoginActivity.this);
 
-                        SharedPreferences.saveSharedPreference(KEY_SHARED_PREFERENCE_LOGGED, AppConstants.YES,LoginActivity.this);
-                        gotoBankActivity();
-                        if(loginModel.getData().isCan_upload_picture())
-                        {
-                            SharedPreferences.saveSharedPreference(AppConstants.KEY_CAN_UPLOAD_PICTURE,AppConstants.YES,LoginActivity.this);
+                        SharedPreferences.saveSharedPreference(KEY_SHARED_PREFERENCE_LOGGED, AppConstants.YES, LoginActivity.this);
 
-                        }else
-                        {
-                            SharedPreferences.saveSharedPreference(AppConstants.KEY_CAN_UPLOAD_PICTURE,AppConstants.NO,LoginActivity.this);
+                        if (loginModel.getData().isCan_upload_picture()) {
+                            SharedPreferences.saveSharedPreference(AppConstants.KEY_CAN_UPLOAD_PICTURE, AppConstants.YES, LoginActivity.this);
+
+                        } else {
+                            SharedPreferences.saveSharedPreference(AppConstants.KEY_CAN_UPLOAD_PICTURE, AppConstants.NO, LoginActivity.this);
 
                         }
 
-                        SharedPreferences.saveSharedPreference(AppConstants.KEY_SUBMITTED_COUNT, String.valueOf(loginModel.getData().getSubmitted_cases_count()),LoginActivity.this);
-                        SharedPreferences.saveSharedPreference(AppConstants.KEY_PENDING_COUNT, String.valueOf(loginModel.getData().getPending_cases_count()),LoginActivity.this);
+                        SharedPreferences.saveSharedPreference(AppConstants.KEY_SUBMITTED_COUNT, String.valueOf(loginModel.getData().getSubmitted_cases_count()), LoginActivity.this);
+                        SharedPreferences.saveSharedPreference(AppConstants.KEY_PENDING_COUNT, String.valueOf(loginModel.getData().getPending_cases_count()), LoginActivity.this);
+                        gotoBankActivity();
 
-
-                    } else
-                    if(null!=loginModel  &&  loginModel.getStatus().equals("fail")) {
+                    } else if (null != loginModel && loginModel.getStatus().equals("fail")) {
                         Toast.makeText(LoginActivity.this, loginModel.getMessage() + " ", Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     Toast.makeText(LoginActivity.this, "Invalid login credentials. Please try again.", Toast.LENGTH_SHORT).show();
                 }
-                BaseMethods.Companion.finishprogress();
+                BaseMethods.INSTANCE.hideProgressDialog();
             }
 
             @Override
             public void onFailure(Call call, Throwable t) {
-                BaseMethods.Companion.finishprogress();
+                BaseMethods.INSTANCE.hideProgressDialog();
                 Toast.makeText(LoginActivity.this, t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
