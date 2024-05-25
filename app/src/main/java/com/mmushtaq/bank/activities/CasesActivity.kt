@@ -60,7 +60,7 @@ class CasesActivity : AppCompatActivity() {
     }
 
     private fun setAdapter(cases: List<Case>?) {
-        if (cases?.size!! > 0) {
+        if (!cases.isNullOrEmpty()) {
             emptyListView.visibility = View.GONE
             val bankRecyclerView = findViewById<RecyclerView>(R.id.bankUsersRecyclerView)
             bankRecyclerView.layoutManager = LinearLayoutManager(this)

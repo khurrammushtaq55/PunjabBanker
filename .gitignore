@@ -19,3 +19,5 @@
 .gradle/6.5/fileChanges/last-build.bin
 .gradle/6.5/executionHistory/executionHistory.lock
 .gradle/6.5/executionHistory/executionHistory.bin
+*.xml
+.idea/.name

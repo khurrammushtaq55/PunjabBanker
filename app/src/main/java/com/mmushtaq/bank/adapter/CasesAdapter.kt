@@ -31,18 +31,20 @@ class CasesAdapter(context: Context, cases: ArrayList<Case>) :
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val viewHolder = holder as MyViewHolder
-        val cas = tempCases!![position]
-        viewHolder.txtUserCnic.text = """${cas.present_tehsil} - ${cas.present_district}"""
-        viewHolder.txtUserName.text = cas.name
-        viewHolder.txtUserNo.text = cas.primary_mobile
-        viewHolder.btnDetails.setOnClickListener {
-            val fm: FragmentManager = (context as FragmentActivity).supportFragmentManager
-            val ft: FragmentTransaction = fm.beginTransaction()
+        if (!tempCases.isNullOrEmpty()) {
+            val cas = tempCases!![position]
+            viewHolder.txtUserCnic.text = """${cas.present_tehsil} - ${cas.present_district}"""
+            viewHolder.txtUserName.text = cas.name
+            viewHolder.txtUserNo.text = cas.primary_mobile
+            viewHolder.btnDetails.setOnClickListener {
+                val fm: FragmentManager = (context as FragmentActivity).supportFragmentManager
+                val ft: FragmentTransaction = fm.beginTransaction()
 
-            CacheManager.case = cases!![position]
-            CacheManager.caseList = cases as ArrayList<Case>
-            ft.add(android.R.id.content, CaseDetailsFragment()).addToBackStack(null).commit()
 
+                CacheManager.case = cas
+                CacheManager.caseList = tempCases as ArrayList<Case>
+                ft.add(android.R.id.content, CaseDetailsFragment()).addToBackStack(null).commit()
+            }
         }
     }
 
