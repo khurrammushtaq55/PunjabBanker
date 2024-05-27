@@ -24,14 +24,14 @@ public class SchemesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private final LayoutInflater mLayoutInflater;
     private final Context context;
     private final List<String> keys;
-    private final Map<String, List<Case>> banksList;
+    private final Map<String, List<Case>> banksListMap;
 
 
-    public SchemesAdapter(Context context, Map<String, List<Case>> banksList) {
+    public SchemesAdapter(Context context, Map<String, List<Case>> banksListMap) {
         this.mLayoutInflater = LayoutInflater.from(context);
         this.context = context;
-        this.banksList = banksList;
-        this.keys = new ArrayList<>(banksList.keySet());
+        this.banksListMap = banksListMap;
+        this.keys = new ArrayList<>(banksListMap.keySet());
 
     }
 
@@ -49,7 +49,7 @@ public class SchemesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
         final SchemesAdapter.MyViewHolder viewHolder = (SchemesAdapter.MyViewHolder) holder;
         viewHolder.schemeName.setText(keys.get(position));
-        viewHolder.btnCases.setOnClickListener(view -> ((SchemeActivity) context).goToCaseList(banksList.getOrDefault(keys.get(position), null)));
+        viewHolder.btnCases.setOnClickListener(view -> ((SchemeActivity) context).goToCaseList(banksListMap.getOrDefault(keys.get(position), null)));
 
 
     }

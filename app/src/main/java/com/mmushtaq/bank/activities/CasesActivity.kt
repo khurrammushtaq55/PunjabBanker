@@ -44,9 +44,8 @@ class CasesActivity : AppCompatActivity() {
         setContentView(R.layout.activity_cases_list)
         TooLargeTool.startLogging(applicationContext as Application)
             val tinyDB = TinyDB(this)
-            if (null != tinyDB.getCaseModel(AppConstants.KEY_ALL_CASES)) {
-
-                CacheManager.caseModel = tinyDB.getCaseModel(AppConstants.KEY_ALL_CASES)!!
+            if (null != tinyDB.getCasesResponseModel()) {
+                CacheManager.caseResponseModel = tinyDB.getCasesResponseModel()
             }
         setAdapter(CacheManager.schemedCases)
 

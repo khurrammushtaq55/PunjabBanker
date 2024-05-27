@@ -16,7 +16,7 @@ import com.mmushtaq.bank.model.CaseModel
 import com.mmushtaq.bank.remote.SharedPreferences
 import com.mmushtaq.bank.utils.AppConstants
 import com.mmushtaq.bank.utils.BaseMethods
-import com.mmushtaq.bank.utils.CacheManager.case
+import com.mmushtaq.bank.utils.CacheManager.caseObj
 import com.mmushtaq.bank.utils.TinyDB
 import com.mmushtaq.bank.viewmodel.SharedViewModel
 import com.mmushtaq.bank.viewmodel.SubmissionViewModel
@@ -46,7 +46,7 @@ class SubmissionFragment : BaseFragment(),
         viewModel = ViewModelProvider(this).get(SharedViewModel::class.java)
         viewModel.serverResponse = this
         submittedDataViewModel = ViewModelProvider(this).get(SubmissionViewModel::class.java)
-        submittedDataViewModel.setSectionCase(case)
+        submittedDataViewModel.setSectionCase(caseObj)
         val list = submittedDataViewModel.getCaseModel().value!!
         BaseMethods.hideKeyboard(requireActivity())
         if (BaseMethods.haveNetworkConnection(requireActivity())) {
@@ -120,23 +120,23 @@ class SubmissionFragment : BaseFragment(),
         val tinyDb = TinyDB(requireActivity())
         if (null != tinyDb.getCasesArray(AppConstants.KEY_CASES)) {
             if (tinyDb.getCasesArray(AppConstants.KEY_CASES).isEmpty()) {
-                tinyDb.putCasesArray(AppConstants.KEY_CASES, arrayListOf(case))
+                tinyDb.putCasesArray(AppConstants.KEY_CASES, arrayListOf(caseObj))
             } else {
                 val newList = tinyDb.getCasesArray(AppConstants.KEY_CASES)
-                newList?.add(case)
+                newList?.add(caseObj)
                 tinyDb.putCasesArray(AppConstants.KEY_CASES, newList)
             }
         }
-        if (null != tinyDb.getCaseModel(AppConstants.KEY_ALL_CASES)) {
-            val allCaseArray: CaseModel? = tinyDb.getCaseModel(AppConstants.KEY_ALL_CASES)!!
+        if (null != tinyDb.getCasesResponseModel()) {
+            val allCaseArray: CaseModel? = tinyDb.getCasesResponseModel()
 
             for (i in 0..allCaseArray?.cases?.size!!) {
-                if (allCaseArray.cases[i].id == case.id) {
+                if (allCaseArray.cases[i].id == caseObj.id) {
                     allCaseArray.cases.removeAt(i)
                     break
                 }
             }
-            tinyDb.putCaseModel(AppConstants.KEY_ALL_CASES, allCaseArray)
+            tinyDb.putCasesResponseModel(allCaseArray)
         }
         requireActivity().finishAffinity()
         val intent = Intent(requireContext(), BanksListActivity::class.java)

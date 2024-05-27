@@ -54,7 +54,10 @@ public class BanksListActivity extends AppCompatActivity implements ServerRespon
     private SharedViewModel sharedViewModel;
     private TinyDB tinyDB;
     private NetworkChangeReceiver networkChangeReceiver;
-    private CaseModel offlineCaseModel;
+    private CaseModel offlineCasesResponseModel;
+    private CaseModel caseResponseModel;
+    private TextView pendingCasesCount;
+    private TextView newCasesCount;
 
 
     @Override
@@ -67,9 +70,8 @@ public class BanksListActivity extends AppCompatActivity implements ServerRespon
         handleListener();
 
 
-        if (BaseMethods.INSTANCE.haveNetworkConnection(this) && null == offlineCaseModel)
-        //online case
-        {
+        if (BaseMethods.INSTANCE.haveNetworkConnection(this) && null == offlineCasesResponseModel) {
+            //online case
             getCasesFromAPI();
         } else {
             //offline case
@@ -84,13 +86,12 @@ public class BanksListActivity extends AppCompatActivity implements ServerRespon
         sharedViewModel = new ViewModelProvider(this).get(SharedViewModel.class);
         tinyDB = new TinyDB(this);
         sharedViewModel.serverResponse = this;
-        offlineCaseModel = tinyDB.getCaseModel(AppConstants.KEY_ALL_CASES);
+        offlineCasesResponseModel = tinyDB.getCasesResponseModel();
 
         // Initialize the BroadcastReceiver
         networkChangeReceiver = new NetworkChangeReceiver(this);
     }
 
-    TextView pendingCasesCount, newCasesCount,offlineCasesCount;
 
     private void setDefaultUI() {
         pendingCasesCount = findViewById(R.id.pendingCasesCount);
@@ -105,17 +106,15 @@ public class BanksListActivity extends AppCompatActivity implements ServerRespon
     }
 
     private void setOfflineCases() {
-        offlineCasesCount = findViewById(R.id.offlineCasesCount);
-        if(!tinyDB.getCasesArray(AppConstants.KEY_CASES).isEmpty())
-        {
-            offlineCasesCount.setText(tinyDB.getCasesArray(AppConstants.KEY_CASES).size()+"");
-        }
-        else  offlineCasesCount.setText("0");
+        TextView offlineCasesCount = findViewById(R.id.offlineCasesCount);
+        if (!tinyDB.getCasesArray(AppConstants.KEY_CASES).isEmpty()) {
+            offlineCasesCount.setText(tinyDB.getCasesArray(AppConstants.KEY_CASES).size() + "");
+        } else offlineCasesCount.setText("0");
     }
 
     private void getCasesFromDB() {
-        if (null != offlineCaseModel) {
-            CacheManager.INSTANCE.setCaseModel(offlineCaseModel);
+        if (null != offlineCasesResponseModel) {
+            CacheManager.INSTANCE.setCaseResponseModel(offlineCasesResponseModel);
             setBanksView();
         }
     }
@@ -129,7 +128,6 @@ public class BanksListActivity extends AppCompatActivity implements ServerRespon
 
     private void sendCasesToAPI() {
         if (!tinyDB.getCasesArray(AppConstants.KEY_CASES).isEmpty()) {
-//            BaseMethods.INSTANCE.showProgressDialog(this);
             sharedViewModel.saveCase(tinyDB.getCasesArray(AppConstants.KEY_CASES), SharedPreferences.getSharedPreferences("access-token", BanksListActivity.this),
                     SharedPreferences.getSharedPreferences("client", BanksListActivity.this),
                     SharedPreferences.getSharedPreferences("uid", BanksListActivity.this));
@@ -137,7 +135,6 @@ public class BanksListActivity extends AppCompatActivity implements ServerRespon
     }
 
     private void setRefreshButton(boolean isVisible) {
-
         btnRefresh.setVisibility(isVisible ? View.VISIBLE : View.GONE);
     }
 
@@ -145,7 +142,7 @@ public class BanksListActivity extends AppCompatActivity implements ServerRespon
 
         RecyclerView bankRecyclerView = findViewById(R.id.bankRecyclerView);
         bankRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        BanksAdapter bankListAdapter = new BanksAdapter(this, processCases(Objects.requireNonNull(CacheManager.INSTANCE.getCaseModel())));
+        BanksAdapter bankListAdapter = new BanksAdapter(this, processCases(Objects.requireNonNull(CacheManager.INSTANCE.getCaseResponseModel())));
         bankRecyclerView.setAdapter(bankListAdapter);
 
     }
@@ -171,7 +168,7 @@ public class BanksListActivity extends AppCompatActivity implements ServerRespon
         return bankSchemeMap;
     }
 
-    CaseModel caseModel;
+
 
     public void getCasesFromAPI() {
 
@@ -186,14 +183,16 @@ public class BanksListActivity extends AppCompatActivity implements ServerRespon
                 BaseMethods.INSTANCE.hideProgressDialog();
                 if (response.isSuccessful()) {
 
-                    caseModel = (CaseModel) response.body();
-                    if (null != caseModel && caseModel.getStatus().equals("success")) {
-                        SharedPreferences.saveSharedPreference(AppConstants.KEY_SUBMITTED_COUNT, String.valueOf(caseModel.getSubmitted_cases_count()), BanksListActivity.this);
-                        SharedPreferences.saveSharedPreference(AppConstants.KEY_PENDING_COUNT, String.valueOf(caseModel.getPending_cases_count()), BanksListActivity.this);
+                    caseResponseModel = (CaseModel) response.body();
+                    if (null != caseResponseModel && caseResponseModel.getStatus().equals("success")) {
+                        SharedPreferences.saveSharedPreference(AppConstants.KEY_SUBMITTED_COUNT, String.valueOf(caseResponseModel.getSubmitted_cases_count()), BanksListActivity.this);
+                        SharedPreferences.saveSharedPreference(AppConstants.KEY_PENDING_COUNT, String.valueOf(caseResponseModel.getPending_cases_count()), BanksListActivity.this);
                         pendingCasesCount.setText(String.format(SharedPreferences.getSharedPreferences(AppConstants.KEY_PENDING_COUNT, BanksListActivity.this)));
                         newCasesCount.setText(String.format(SharedPreferences.getSharedPreferences(AppConstants.KEY_SUBMITTED_COUNT, BanksListActivity.this)));
-                        CacheManager.INSTANCE.setCaseModel(caseModel);
-                        tinyDB.putCaseModel(AppConstants.KEY_ALL_CASES, caseModel);
+                        //adding in cache
+                        CacheManager.INSTANCE.setCaseResponseModel(caseResponseModel);
+                        //adding in local database
+                        tinyDB.putCasesResponseModel(caseResponseModel);
                         setBanksView();
 
                     } else {
@@ -201,7 +200,7 @@ public class BanksListActivity extends AppCompatActivity implements ServerRespon
                     }
                 } else {
                     Toast.makeText(BanksListActivity.this, "Error! Please try again!", Toast.LENGTH_SHORT).show();
-                    Log.e("errror", response.toString());
+                    Log.e("error", response.toString());
                 }
             }
 
@@ -264,10 +263,7 @@ public class BanksListActivity extends AppCompatActivity implements ServerRespon
             public void onResponse(Call call, Response response) {
                 BaseMethods.INSTANCE.hideProgressDialog();
                 if (response.isSuccessful()) {
-                    SharedPreferences.saveSharedPreference(AppConstants.KEY_SHARED_PREFERENCE_LOGGED, AppConstants.NO, getApplicationContext());
-                    tinyDB.clear();
-                    finish();
-                    startActivity(new Intent(BanksListActivity.this, LoginActivity.class));
+                    gotoLoginActivity();
                 } else
                     Toast.makeText(BanksListActivity.this, "Error! Please try again!", Toast.LENGTH_SHORT).show();
 
@@ -280,6 +276,13 @@ public class BanksListActivity extends AppCompatActivity implements ServerRespon
             }
         });
 
+    }
+
+    private void gotoLoginActivity() {
+        SharedPreferences.saveSharedPreference(AppConstants.KEY_SHARED_PREFERENCE_LOGGED, AppConstants.NO, getApplicationContext());
+        tinyDB.clear();
+        finish();
+        startActivity(new Intent(BanksListActivity.this, LoginActivity.class));
     }
 
     public void goToSchemas(List<Case> schemedCases) {

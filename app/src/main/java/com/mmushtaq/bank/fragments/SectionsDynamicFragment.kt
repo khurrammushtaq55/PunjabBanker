@@ -21,7 +21,7 @@ import com.mmushtaq.bank.model.Section
 import com.mmushtaq.bank.remote.SharedPreferences
 import com.mmushtaq.bank.utils.AppConstants
 import com.mmushtaq.bank.utils.BaseMethods
-import com.mmushtaq.bank.utils.CacheManager.case
+import com.mmushtaq.bank.utils.CacheManager.caseObj
 import com.mmushtaq.bank.utils.TinyDB
 import com.mmushtaq.bank.viewmodel.SharedViewModel
 import com.mmushtaq.bank.viewmodel.SubmissionViewModel
@@ -54,21 +54,21 @@ class SectionsDynamicFragment(private var index: Int) : BaseFragment(),
         viewModel.serverResponse = this
 
         submittedDataViewModel = ViewModelProvider(this).get(SubmissionViewModel::class.java)
-        submittedDataViewModel.setSectionCase(case)
+        submittedDataViewModel.setSectionCase(caseObj)
 
         BaseMethods.hideKeyboard(requireActivity())
 
-        if (case.sections == null) {
+        if (caseObj.sections == null) {
             Toast.makeText(activity, "There are no Sections against this Case", Toast.LENGTH_SHORT)
                 .show()
             return
         }
 
-        enableButton(validateFields(case.sections[index]))
+        enableButton(validateFields(caseObj.sections[index]))
 
         setListener()
 
-        sectionTitle.text = case.sections[index].title
+        sectionTitle.text = caseObj.sections[index].title
         /* if(index+1==case.sections.size)
              btnNext.text = getString(R.string.submit)*/
 
@@ -89,15 +89,15 @@ class SectionsDynamicFragment(private var index: Int) : BaseFragment(),
         btnNext.setOnClickListener {
             BaseMethods.hideKeyboard(requireActivity())
 
-            val section = case.sections[index]
+            val section = caseObj.sections[index]
             section.questions = sectionsAdapter.getFilledData()
-            case.sections[index] = section
-            submittedDataViewModel.setSectionCase(case)
+            caseObj.sections[index] = section
+            submittedDataViewModel.setSectionCase(caseObj)
 
 
-            if ((index + 1) < case.sections.size) {
+            if ((index + 1) < caseObj.sections.size) {
                 val ft = activity?.supportFragmentManager?.beginTransaction()
-                if (case.sections[index + 1].type == (getString(R.string.agent_info))) {
+                if (caseObj.sections[index + 1].type == (getString(R.string.agent_info))) {
                     ft?.add(android.R.id.content, SectionsDynamicFragment(index + 2))
                         ?.addToBackStack(null)?.commit()
                 } else {
@@ -107,7 +107,7 @@ class SectionsDynamicFragment(private var index: Int) : BaseFragment(),
 
             } else {
 
-                if (null != case.documents_business_attributes && case.documents_business_attributes.size > 0) {
+                if (null != caseObj.documents_business_attributes && caseObj.documents_business_attributes.size > 0) {
                     val ft = activity?.supportFragmentManager?.beginTransaction()
                     ft?.add(android.R.id.content, DocumentsBusinessFragment())
                         ?.addToBackStack("DocumentsResidenceFragment")?.commit()
@@ -211,23 +211,23 @@ class SectionsDynamicFragment(private var index: Int) : BaseFragment(),
         val tinyDb = TinyDB(requireActivity())
         if (null != tinyDb.getCasesArray(AppConstants.KEY_CASES)) {
             if (tinyDb.getCasesArray(AppConstants.KEY_CASES).isNullOrEmpty()) {
-                tinyDb.putCasesArray(AppConstants.KEY_CASES, arrayListOf(case))
+                tinyDb.putCasesArray(AppConstants.KEY_CASES, arrayListOf(caseObj))
             } else {
                 val newList = tinyDb.getCasesArray(AppConstants.KEY_CASES)
-                newList!!.add(case)
+                newList!!.add(caseObj)
                 tinyDb.putCasesArray(AppConstants.KEY_CASES, newList)
             }
         }
 
-        val allCaseArray: CaseModel? = tinyDb.getCaseModel(AppConstants.KEY_ALL_CASES)!!
+        val allCaseArray: CaseModel? = tinyDb.getCasesResponseModel()
 
         for (i in 0..allCaseArray?.cases?.size!!) {
-            if (allCaseArray.cases[i].id == case.id) {
+            if (allCaseArray.cases[i].id == caseObj.id) {
                 allCaseArray.cases.removeAt(i)
                 break
             }
         }
-        tinyDb.putCaseModel(AppConstants.KEY_ALL_CASES, allCaseArray)
+        tinyDb.putCasesResponseModel( allCaseArray)
         requireActivity().finish()
         val intent = Intent(activity, CasesActivity::class.java)
         startActivity(intent)
@@ -282,7 +282,7 @@ class SectionsDynamicFragment(private var index: Int) : BaseFragment(),
     }
 
     override fun validateField(caseIndex: Int) {
-        enableButton(validateFields(case.sections[caseIndex]))
+        enableButton(validateFields(caseObj.sections[caseIndex]))
     }
 
 

@@ -1,5 +1,6 @@
 package com.mmushtaq.bank.adapter
 
+import android.app.Activity
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
@@ -13,15 +14,16 @@ import androidx.recyclerview.widget.RecyclerView
 import com.mmushtaq.bank.R
 import com.mmushtaq.bank.fragments.CaseDetailsFragment
 import com.mmushtaq.bank.model.Case
+import com.mmushtaq.bank.utils.BaseMethods
 import com.mmushtaq.bank.utils.CacheManager
 import java.util.Locale
 
 
-class CasesAdapter(context: Context, cases: ArrayList<Case>) :
+class CasesAdapter(context: Activity, cases: ArrayList<Case>) :
     RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private val cases: List<Case>?
     private val mLayoutInflater: LayoutInflater = LayoutInflater.from(context)
-    private val context: Context
+    private val context: Activity
     private var tempCases: ArrayList<Case>?
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -32,20 +34,35 @@ class CasesAdapter(context: Context, cases: ArrayList<Case>) :
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val viewHolder = holder as MyViewHolder
         if (!tempCases.isNullOrEmpty()) {
-            val cas = tempCases!![position]
-            viewHolder.txtUserCnic.text = """${cas.present_tehsil} - ${cas.present_district}"""
-            viewHolder.txtUserName.text = cas.name
-            viewHolder.txtUserNo.text = cas.primary_mobile
+            val tempCase = tempCases!![position]
+            viewHolder.txtUserCnic.text =
+                """${tempCase.present_tehsil} - ${tempCase.present_district}"""
+            viewHolder.txtUserName.text = tempCase.name
+            viewHolder.txtUserNo.text = tempCase.primary_mobile
             viewHolder.btnDetails.setOnClickListener {
+                BaseMethods.hideKeyboard(context)
                 val fm: FragmentManager = (context as FragmentActivity).supportFragmentManager
                 val ft: FragmentTransaction = fm.beginTransaction()
 
+                val originalCase = getOriginalCase(tempCase)
 
-                CacheManager.case = cas
-                CacheManager.caseList = tempCases as ArrayList<Case>
-                ft.add(android.R.id.content, CaseDetailsFragment()).addToBackStack(null).commit()
+                if (originalCase != null) {
+                    CacheManager.caseObj = originalCase
+                    ft.add(android.R.id.content, CaseDetailsFragment()).addToBackStack(null)
+                        .commit()
+                }
             }
         }
+    }
+
+    private fun getOriginalCase(tempCase: Case): Case? {
+
+        for (case in CacheManager.caseResponseModel?.getCases()!!) {
+            if (tempCase.id == case.id) {
+                return case
+            }
+        }
+        return null
     }
 
     // filter name in Search Bar

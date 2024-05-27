@@ -30,8 +30,8 @@ class TinyDB(context: Context) {
         return ArrayList<Case>()
     }
 
-    fun getCaseModel(key: String?): CaseModel? {
-        val json = getString(key)
+    fun getCasesResponseModel(): CaseModel? {
+        val json = getString(AppConstants.KEY_ALL_CASES)
         if (json.isNotEmpty()) {
             val case: CaseModel
             val gson = GsonBuilder().create()
@@ -52,10 +52,10 @@ class TinyDB(context: Context) {
         }
     }
 
-    fun putCaseModel(key: String?, obj: CaseModel?) {
+    fun putCasesResponseModel(obj: CaseModel?) {
         val gson = Gson()
         if (null != obj) {
-            putString(key, gson.toJson(obj))
+            putString(AppConstants.KEY_ALL_CASES, gson.toJson(obj))
         }
     }
 

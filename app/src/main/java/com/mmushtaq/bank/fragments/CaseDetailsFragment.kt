@@ -36,7 +36,7 @@ class CaseDetailsFragment() : BaseFragment() {
         val recyclerView = contentView?.findViewById<RecyclerView>(R.id.recycler_view)
         recyclerView?.layoutManager = LinearLayoutManager(requireContext())
         val casesDetailAdapter =
-            handleArray(CacheManager.case.header)?.let { CasesDetailAdapter(requireContext(), it) }
+            handleArray(CacheManager.caseObj.header)?.let { CasesDetailAdapter(requireContext(), it) }
         recyclerView?.adapter = casesDetailAdapter
 
         detailsNext.setOnClickListener {
@@ -47,12 +47,14 @@ class CaseDetailsFragment() : BaseFragment() {
         }
     }
 
-    private fun handleArray(header: List<Header>): MutableList<Header>? {
+    private fun handleArray(header: List<Header>?): MutableList<Header>? {
         val headerTempList: MutableList<Header> = mutableListOf()
-        for (item in header) {
-            // body of loop
-            if (item.value != null) headerTempList.add(item)
+        if (header != null) {
+            for (item in header) {
+                // body of loop
+                if (item.value != null) headerTempList.add(item)
 
+            }
         }
         return headerTempList
     }

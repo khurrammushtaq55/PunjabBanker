@@ -281,6 +281,7 @@ public class Case implements Serializable {
 
     public Case copy() {
         Case obj=new Case();
+        obj.setId(getId());
         obj.setName(getName());
         obj.setPresent_address(getPresent_address());
         obj.setBusiness_address(getBusiness_address());

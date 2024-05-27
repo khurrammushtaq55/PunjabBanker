@@ -18,11 +18,10 @@ import com.github.drjacky.imagepicker.ImagePicker
 import com.mmushtaq.bank.R
 import com.mmushtaq.bank.adapter.DocumentsAdapter
 import com.mmushtaq.bank.model.Documents
-import com.mmushtaq.bank.remote.BaseApplication
 import com.mmushtaq.bank.remote.SharedPreferences
 import com.mmushtaq.bank.utils.AppConstants
 import com.mmushtaq.bank.utils.BaseMethods
-import com.mmushtaq.bank.utils.CacheManager.case
+import com.mmushtaq.bank.utils.CacheManager.caseObj
 import com.mmushtaq.bank.utils.EasyLocationFetch
 import com.mmushtaq.bank.utils.GeoLocationModel
 import com.mmushtaq.bank.viewmodel.SubmissionViewModel
@@ -63,7 +62,7 @@ class DocumentsBusinessFragment() : BaseFragment() {
         super.onActivityCreated(savedInstanceState)
         submissionViewModel = ViewModelProvider(this).get(SubmissionViewModel::class.java)
 
-        enableButton(validateFields(case.documents_business_attributes))
+        enableButton(validateFields(caseObj.documents_business_attributes))
         setRecyclerView()
         setListener()
 
@@ -83,8 +82,8 @@ class DocumentsBusinessFragment() : BaseFragment() {
 
     private fun setListener() {
         docNext.setOnClickListener {
-            case.documents_business_attributes = documentsAdapter!!.getFilledData()
-            submissionViewModel.setSectionCase(case)
+            caseObj.documents_business_attributes = documentsAdapter!!.getFilledData()
+            submissionViewModel.setSectionCase(caseObj)
 
             val ft = activity?.supportFragmentManager?.beginTransaction()
             ft?.add(android.R.id.content, SubmissionFragment())
@@ -98,7 +97,7 @@ class DocumentsBusinessFragment() : BaseFragment() {
         docRecycler.layoutManager = LinearLayoutManager(activity)
         val documentAdapter = DocumentsAdapter(
             requireActivity(),
-            case.documents_business_attributes,
+            caseObj.documents_business_attributes,
             ::itemClick,
             ::onUpload,
             ::removeAttachment
@@ -128,7 +127,7 @@ class DocumentsBusinessFragment() : BaseFragment() {
                 createPickerDialog(position)
             } else {
                 ImagePicker.with(this).cameraOnly().start()
-                case.documents_business_attributes[position].isManualLatLng = false
+                caseObj.documents_business_attributes[position].isManualLatLng = false
             }
         }
     }
@@ -136,15 +135,15 @@ class DocumentsBusinessFragment() : BaseFragment() {
 
     private fun removeAttachment(position: Int) {
 
-        case.documents_business_attributes[currentPosition].isAdded = false
-        case.documents_business_attributes[position].documentUrl = null
-        enableButton(validateFields(case.documents_business_attributes))
+        caseObj.documents_business_attributes[currentPosition].isAdded = false
+        caseObj.documents_business_attributes[position].documentUrl = null
+        enableButton(validateFields(caseObj.documents_business_attributes))
 
     }
 
     private fun itemClick(position: String) {
 
-        enableButton(validateFields(case.documents_business_attributes))
+        enableButton(validateFields(caseObj.documents_business_attributes))
 
     }
 
@@ -188,8 +187,8 @@ class DocumentsBusinessFragment() : BaseFragment() {
             if (null != btn && removeBtn != null) {
                 if (ar != null) btn?.text = getString(R.string.img_uploaded)
                 removeBtn!!.visibility = View.VISIBLE
-                if (case.documents_business_attributes[currentPosition].coordinates_required!!) {
-                    if (case.documents_business_attributes[currentPosition].isManualLatLng!!) {
+                if (caseObj.documents_business_attributes[currentPosition].coordinates_required!!) {
+                    if (caseObj.documents_business_attributes[currentPosition].isManualLatLng!!) {
 
                         containerLatLng?.visibility = View.VISIBLE
                     } else {
@@ -198,11 +197,11 @@ class DocumentsBusinessFragment() : BaseFragment() {
                     }
                 }
 
-                case.documents_business_attributes[currentPosition].isAdded = true
+                caseObj.documents_business_attributes[currentPosition].isAdded = true
                 val encodedImage: String = Base64.encodeToString(ar, Base64.DEFAULT)
-                case.documents_business_attributes[currentPosition].documentUrl = encodedImage
-                submissionViewModel.setSectionCase(case)
-                enableButton(validateFields(case.documents_business_attributes))
+                caseObj.documents_business_attributes[currentPosition].documentUrl = encodedImage
+                submissionViewModel.setSectionCase(caseObj)
+                enableButton(validateFields(caseObj.documents_business_attributes))
                 BaseMethods.hideProgressDialog()
             } else BaseMethods.hideProgressDialog()
         } ?: showError("Please retake image")
@@ -226,9 +225,9 @@ class DocumentsBusinessFragment() : BaseFragment() {
 
 
             } else {
-                case.documents_business_attributes[currentPosition].latitude =
+                caseObj.documents_business_attributes[currentPosition].latitude =
                     geoLocationModel.lattitude.toString()
-                case.documents_business_attributes[currentPosition].longitude =
+                caseObj.documents_business_attributes[currentPosition].longitude =
                     geoLocationModel.longitude.toString()
                 showError("" + geoLocationModel.lattitude.toString() + " " + geoLocationModel.longitude.toString())
             }
@@ -240,10 +239,10 @@ class DocumentsBusinessFragment() : BaseFragment() {
 
     private fun retake() {
         showError("Please turn on Location from settings and then take picture")
-        case.documents_business_attributes[currentPosition].isAdded = false
-        case.documents_business_attributes[currentPosition].documentUrl = null
-        submissionViewModel.setSectionCase(case)
-        enableButton(validateFields(case.documents_business_attributes))
+        caseObj.documents_business_attributes[currentPosition].isAdded = false
+        caseObj.documents_business_attributes[currentPosition].documentUrl = null
+        submissionViewModel.setSectionCase(caseObj)
+        enableButton(validateFields(caseObj.documents_business_attributes))
         btn!!.text = getString(R.string.upload)
         removeBtn!!.visibility = View.GONE
 
@@ -297,7 +296,7 @@ class DocumentsBusinessFragment() : BaseFragment() {
             ImagePicker.with(this)
                 .cameraOnly().start()
 //            ImagePicker.cameraOnly().start(this)
-            case.documents_business_attributes[position].isManualLatLng = false
+            caseObj.documents_business_attributes[position].isManualLatLng = false
             dialog.hide()
         }
         gallery.setOnClickListener {
@@ -305,7 +304,7 @@ class DocumentsBusinessFragment() : BaseFragment() {
                 .galleryOnly().start()
 //            ImagePicker.create(this) // Activity or Fragment
 //                    .showCamera(false).single().start()
-            case.documents_business_attributes[position].isManualLatLng = true
+            caseObj.documents_business_attributes[position].isManualLatLng = true
             dialog.hide()
         }
         dialog.show()

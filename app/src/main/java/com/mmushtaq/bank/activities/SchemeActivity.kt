@@ -34,7 +34,7 @@ class SchemeActivity : AppCompatActivity() {
                 // Check if the bank name is already in the map
                 if (bankSchemeMap.containsKey(scheme)) {
                     // If bank name exists, add the scheme to its list
-                    bankSchemeMap[scheme]!!.add(caseItem)
+                    bankSchemeMap[scheme]?.add(caseItem)
                 } else {
                     // If bank name does not exist, create a new list for it and add the scheme
                     val schemeList: MutableList<Case> = ArrayList()
@@ -57,7 +57,4 @@ class SchemeActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
-    override fun onBackPressed() {
-        super.onBackPressed()
-    }
 }
